@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Link from "next/link";
+import Sidebar from "../components/Sidebar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,12 +24,22 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Sidebar open/close state (client only)
+  // Use a workaround for SSR: sidebar is always open on first render
+  // For a real app, move this to a client component
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black text-white`}
       >
-        {children}
+        <div className="flex min-h-screen">
+          {/* Sidebar */}
+          <Sidebar />
+          {/* Main content */}
+          <main className="flex-1 bg-black text-white border-l border-white/20 min-h-screen">
+            {children}
+          </main>
+        </div>
       </body>
     </html>
   );
