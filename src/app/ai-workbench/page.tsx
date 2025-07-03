@@ -18,7 +18,7 @@ export default function AIWorkbench() {
                   <span className="text-white text-lg font-semibold">Top Left</span>
                 </div>
               </ResizablePanel>
-              <ResizableHandle withHandle />
+              <ResizableHandle withHandle className="border border-white/20 border-[1px]" />
               {/* Bottom Left */}
               <ResizablePanel defaultSize={50} minSize={20} className="min-h-0">
                 <div className="flex flex-col h-full w-full items-center justify-center p-2 bg-black">
@@ -27,7 +27,7 @@ export default function AIWorkbench() {
               </ResizablePanel>
             </ResizablePanelGroup>
           </ResizablePanel>
-          <ResizableHandle withHandle />
+          <ResizableHandle withHandle className="border border-white/20 border-[1px]" />
           {/* Right side (vertical split) */}
           <ResizablePanel defaultSize={50} minSize={20} className="min-w-0">
             <ResizablePanelGroup direction="vertical" className="h-full min-h-0">
@@ -37,7 +37,7 @@ export default function AIWorkbench() {
                   <span className="text-white text-lg font-semibold">Top Right</span>
                 </div>
               </ResizablePanel>
-              <ResizableHandle withHandle />
+              <ResizableHandle withHandle className="border border-white/20 border-[1px]" />
               {/* Bottom Right */}
               <ResizablePanel defaultSize={50} minSize={20} className="min-h-0">
                 <div className="flex flex-col h-full w-full items-center justify-center p-2 bg-black">
