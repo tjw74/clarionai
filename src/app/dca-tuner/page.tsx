@@ -6,6 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { DollarSign, Activity, Wallet, Calendar, TrendingUp, Sparkle } from "lucide-react";
 
 function formatUSDShort(value: number): string {
   if (value >= 1e9) return `$${(value / 1e9).toFixed(2)}B`;
@@ -18,10 +19,20 @@ function formatPercent(value: number): string {
   return `${value > 0 ? '+' : ''}${value.toFixed(2)}%`;
 }
 
-function Card({ label, value, children }: { label: string; value?: string | number | null; children?: React.ReactNode }) {
+type CardProps = {
+  label: string;
+  value?: string | number | null;
+  icon?: React.ReactNode;
+  children?: React.ReactNode;
+};
+
+function Card({ label, value, icon, children }: CardProps) {
   return (
-    <div className="bg-[#18181b] border border-white/10 rounded-2xl p-6 shadow-lg flex flex-col items-center min-h-[120px] w-full">
-      <div className="text-lg text-white/70 mb-2">{label}</div>
+    <div className="bg-[#18181b] border border-white/10 rounded-2xl p-6 shadow-lg flex flex-col items-center min-h-[120px] w-full relative">
+      {icon && (
+        <span className="absolute top-4 right-4 text-white/60">{icon}</span>
+      )}
+      <div className="text-lg text-white/70 mb-2 w-full text-center">{label}</div>
       {value !== undefined && (
         <div className="text-4xl font-bold mb-2">{value !== null ? value : '—'}</div>
       )}
@@ -195,21 +206,21 @@ export default function DCATunerPage() {
       <main className="flex flex-col items-center w-full py-8 mx-auto gap-y-8">
         {/* Top row: 4 cards in a responsive grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 w-full px-8">
-          <Card label="BTC Close Price" value={
+          <Card label="BTC Close Price" icon={<DollarSign className="w-5 h-5" />} value={
             loading
               ? 'Loading...'
               : typeof closePrice === 'number' && !isNaN(closePrice)
                 ? formatUSDShort(closePrice)
                 : error || '—'
           } />
-          <Card label="Adjusted SOPR" value={
+          <Card label="Adjusted SOPR" icon={<Activity className="w-5 h-5" />} value={
             loading
               ? 'Loading...'
               : typeof sopr === 'number' && !isNaN(sopr)
                 ? sopr.toLocaleString(undefined, { maximumFractionDigits: 4 })
                 : error || '—'
           } />
-          <Card label="Budget (USD)">
+          <Card label="Budget (USD)" icon={<Wallet className="w-5 h-5" />}>
             <input
               type="number"
               min={1}
@@ -219,7 +230,7 @@ export default function DCATunerPage() {
               onChange={handleBudgetChange}
             />
           </Card>
-          <Card label="Time Frame">
+          <Card label="Time Frame" icon={<Calendar className="w-5 h-5" />}>
             <select
               className="mt-2 px-3 py-2 rounded bg-[#232326] text-white w-36 text-center border border-white/10 focus:outline-none focus:ring-2 focus:ring-white/20"
               value={timeFrame}
@@ -233,7 +244,7 @@ export default function DCATunerPage() {
         </div>
         {/* Second row: 2 cards in a grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full px-8">
-          <Card label="DCA Performance">
+          <Card label="DCA Performance" icon={<TrendingUp className="w-5 h-5" />}>
             {loading || !dcaResult ? (
               <div className="text-4xl font-bold mb-2">--</div>
             ) : (
@@ -262,7 +273,7 @@ export default function DCATunerPage() {
               </div>
             )}
           </Card>
-          <Card label="Tuned DCA Performance">
+          <Card label="Tuned DCA Performance" icon={<Sparkle className="w-5 h-5" />}>
             {loading || !tunedDCAResult ? (
               <div className="text-4xl font-bold mb-2">--</div>
             ) : (
