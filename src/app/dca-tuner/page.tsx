@@ -7,6 +7,29 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { DollarSign, Activity, Wallet, Calendar, TrendingUp, Sparkle } from "lucide-react";
+import { Line, Bar } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Tooltip,
+  Legend,
+  Title,
+} from 'chart.js';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Tooltip,
+  Legend,
+  Title
+);
 
 function formatUSDShort(value: number): string {
   if (value >= 1e9) return `$${(value / 1e9).toFixed(2)}B`;
@@ -74,6 +97,35 @@ function rollingStats(arr: number[]): { means: number[]; stds: number[] } {
     stds.push(std);
   }
   return { means, stds };
+}
+
+// Helper: Z-score calculation for all days
+function getZScores(arr: number[]): number[] {
+  if (!arr.length) return [];
+  const mean = arr.reduce((a: number, b: number) => a + b, 0) / arr.length;
+  const std = Math.sqrt(arr.reduce((a: number, b: number) => a + (b - mean) ** 2, 0) / arr.length);
+  return arr.map((v: number) => std > 0 ? (v - mean) / std : 0);
+}
+
+// Helper: Histogram binning
+function getZScoreHistogram(zscores: number[], binWidth: number = 0.2): { bins: number[]; counts: number[] } {
+  if (!zscores.length) return { bins: [], counts: [] };
+  const min = Math.floor(Math.min(...zscores) / binWidth) * binWidth;
+  const max = Math.ceil(Math.max(...zscores) / binWidth) * binWidth;
+  const bins: number[] = [];
+  for (let b = min; b < max; b += binWidth) {
+    bins.push(b);
+  }
+  const counts = bins.map((b, i) => {
+    const upper = b + binWidth;
+    const count = zscores.filter((z: number) => z >= b && z < upper).length;
+    return count;
+  });
+  // Last bin includes max value
+  if (bins.length) {
+    counts[counts.length - 1] += zscores.filter((z: number) => z === max).length;
+  }
+  return { bins, counts };
 }
 
 export default function DCATunerPage() {
@@ -198,6 +250,57 @@ export default function DCATunerPage() {
     };
   }, [ohlcData, soprData, budget, timeFrame, loading, error]);
 
+  // Chart data for price line chart
+  const priceChartData = useMemo(() => {
+    if (!ohlcData.length) return null;
+    const labels = ohlcData.map((_, i) => i);
+    const prices = ohlcData.map(ohlc => Array.isArray(ohlc) ? ohlc[ohlc.length - 1] : null);
+    return {
+      labels,
+      datasets: [
+        {
+          label: 'BTC Price',
+          data: prices,
+          borderColor: '#60a5fa',
+          backgroundColor: 'rgba(96,165,250,0.1)',
+          pointRadius: 0,
+          tension: 0.2,
+        },
+      ],
+    };
+  }, [ohlcData]);
+
+  // Chart data for Z-score histogram
+  const zScoreChartData = useMemo(() => {
+    if (!soprData.length) return null;
+    const zscores = getZScores(soprData);
+    const { bins, counts } = getZScoreHistogram(zscores, 0.2);
+    const total = zscores.length;
+    return {
+      labels: bins.map(b => b.toFixed(2)),
+      datasets: [
+        {
+          label: 'Z-score Distribution',
+          data: counts.map(c => (c / total) * 100),
+          backgroundColor: '#fbbf24',
+        },
+      ],
+    };
+  }, [soprData]);
+
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      legend: { labels: { color: '#fff' } },
+      title: { display: false },
+      tooltip: { mode: 'index' as const, intersect: false },
+    },
+    scales: {
+      x: { ticks: { color: '#fff' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+      y: { ticks: { color: '#fff' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+    },
+  };
+
   return (
     <div className="bg-black text-white min-h-screen w-full flex flex-col border-b border-white/20">
       <header className="py-8 border-b border-white/20 w-full flex items-center justify-center px-8">
@@ -316,6 +419,35 @@ export default function DCATunerPage() {
               </AccordionContent>
             </AccordionItem>
           </Accordion>
+        </div>
+        {/* Chart section: two charts side by side */}
+        <div className="w-full px-8 flex flex-col lg:flex-row gap-8">
+          <div className="flex-1">
+            <Card label="BTC Price Chart">
+              {priceChartData ? (
+                <Line data={priceChartData} options={{ ...chartOptions, plugins: { ...chartOptions.plugins, title: { display: true, text: 'BTC Price', color: '#fff' } } }} height={300} />
+              ) : (
+                <div className="text-white/60 text-center py-12">No data</div>
+              )}
+            </Card>
+          </div>
+          <div className="flex-1">
+            <Card label="Z-score Distribution">
+              {zScoreChartData ? (
+                <Bar data={zScoreChartData} options={{
+                  ...chartOptions,
+                  plugins: { ...chartOptions.plugins, title: { display: true, text: 'Z-score Distribution', color: '#fff' } },
+                  scales: {
+                    ...chartOptions.scales,
+                    y: { ...chartOptions.scales.y, title: { display: true, text: '% of Days', color: '#fff' } },
+                    x: { ...chartOptions.scales.x, title: { display: true, text: 'Z-score', color: '#fff' } },
+                  },
+                }} height={300} />
+              ) : (
+                <div className="text-white/60 text-center py-12">No data</div>
+              )}
+            </Card>
+          </div>
         </div>
         <div className="flex flex-col flex-1 w-full p-4 gap-4">
           {/* More content and charts will go here */}
