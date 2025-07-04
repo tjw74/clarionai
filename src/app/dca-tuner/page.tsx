@@ -45,10 +45,25 @@ function getTimeFrameSlice(ohlcData: any[], timeFrame: string) {
   return ohlcData.slice(-days);
 }
 
+// Helper: rolling mean and std
+function rollingStats(arr: number[]): { means: number[]; stds: number[] } {
+  const means: number[] = [];
+  const stds: number[] = [];
+  for (let i = 0; i < arr.length; i++) {
+    const windowArr = arr.slice(0, i + 1);
+    const mean = windowArr.reduce((a, b) => a + b, 0) / windowArr.length;
+    const std = Math.sqrt(windowArr.reduce((a, b) => a + (b - mean) ** 2, 0) / windowArr.length);
+    means.push(mean);
+    stds.push(std);
+  }
+  return { means, stds };
+}
+
 export default function DCATunerPage() {
   const [closePrice, setClosePrice] = useState<number | null>(null);
   const [sopr, setSopr] = useState<number | null>(null);
   const [ohlcData, setOhlcData] = useState<any[]>([]);
+  const [soprData, setSoprData] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [budget, setBudget] = useState<number>(100);
@@ -68,6 +83,7 @@ export default function DCATunerPage() {
         const ohlc = await ohlcRes.json();
         const soprData = await soprRes.json();
         setOhlcData(ohlc);
+        setSoprData(soprData);
         const lastOhlc = ohlc[ohlc.length - 1];
         const lastClose = Array.isArray(lastOhlc) ? lastOhlc[lastOhlc.length - 1] : null;
         const lastSopr = soprData[soprData.length - 1];
@@ -123,8 +139,47 @@ export default function DCATunerPage() {
     };
   }, [ohlcData, budget, timeFrame, loading, error]);
 
-  // Placeholder for tuned DCA
-  const tunedDCA = '--';
+  // Tuned DCA calculation (stepwise Z-score zones)
+  const tunedDCAResult = useMemo(() => {
+    if (!ohlcData.length || !budget || loading || error) return null;
+    if (!Array.isArray(soprData) || soprData.length !== ohlcData.length) return null;
+    const slicedOhlc = getTimeFrameSlice(ohlcData, timeFrame);
+    const slicedSopr = getTimeFrameSlice(soprData, timeFrame);
+    if (!slicedSopr.length || slicedSopr.length !== slicedOhlc.length) return null;
+    const { means, stds } = rollingStats(slicedSopr);
+    const k = 0.25;
+    let totalBTC = 0;
+    let totalInvested = 0;
+    for (let i = 0; i < slicedOhlc.length; i++) {
+      const ohlc = slicedOhlc[i];
+      const close = Array.isArray(ohlc) ? ohlc[ohlc.length - 1] : null;
+      if (typeof close !== 'number' || close <= 0) continue;
+      const soprVal = slicedSopr[i];
+      const mean = means[i];
+      const std = stds[i];
+      const z = std > 0 ? (soprVal - mean) / std : 0;
+      let zone = 0;
+      if (z < 0) zone = Math.floor(z / 0.5);
+      else zone = Math.ceil(z / 0.5);
+      zone = Math.max(-4, Math.min(4, zone));
+      let multiplier = 1 - k * zone;
+      multiplier = Math.max(0.1, Math.min(2.0, multiplier));
+      const tunedBudget = budget * multiplier;
+      const btcBought = tunedBudget / close;
+      totalBTC += btcBought;
+      totalInvested += tunedBudget;
+    }
+    const finalClose = Array.isArray(slicedOhlc[slicedOhlc.length - 1]) ? slicedOhlc[slicedOhlc.length - 1][slicedOhlc[slicedOhlc.length - 1].length - 1] : null;
+    if (!finalClose || totalInvested === 0) return null;
+    const finalValue = totalBTC * finalClose;
+    const percentReturn = ((finalValue - totalInvested) / totalInvested) * 100;
+    return {
+      totalBTC,
+      totalInvested,
+      finalValue,
+      percentReturn,
+    };
+  }, [ohlcData, soprData, budget, timeFrame, loading, error]);
 
   return (
     <div className="bg-black text-white min-h-screen w-full flex flex-col border-b border-white/20">
@@ -176,15 +231,58 @@ export default function DCATunerPage() {
             {loading || !dcaResult ? (
               <div className="text-4xl font-bold mb-2">--</div>
             ) : (
-              <>
-                <div className="text-2xl font-bold mb-2">{formatUSDShort(dcaResult.finalValue)}</div>
-                <div className={"text-base mb-2 " + (dcaResult.percentReturn >= 0 ? 'text-green-400' : 'text-red-400')}>Return: {formatPercent(dcaResult.percentReturn)}</div>
-                <div className="text-base text-white/70 mb-1">Total Invested: <span className="text-white">{formatUSDShort(dcaResult.totalInvested)}</span></div>
-                <div className="text-base text-white/70 mb-1">BTC Accumulated: <span className="text-white">{dcaResult.totalBTC.toFixed(6)}</span></div>
-              </>
+              <div className="flex flex-row items-center justify-between w-full gap-4 text-base">
+                <div className="flex flex-col items-center flex-1">
+                  <div className="text-xs text-white/60 mb-1">Value</div>
+                  <div className="font-bold">{formatUSDShort(dcaResult.finalValue)}</div>
+                </div>
+                <div className={"flex flex-col items-center flex-1 " + (dcaResult.finalValue - dcaResult.totalInvested >= 0 ? 'text-green-400' : 'text-red-400')}>
+                  <div className="text-xs text-white/60 mb-1">Profit</div>
+                  <div className="font-bold">{formatUSDShort(dcaResult.finalValue - dcaResult.totalInvested)}</div>
+                </div>
+                <div className={"flex flex-col items-center flex-1 " + (dcaResult.percentReturn >= 0 ? 'text-green-400' : 'text-red-400')}>
+                  <div className="text-xs text-white/60 mb-1">Return</div>
+                  <div className="font-bold">{formatPercent(dcaResult.percentReturn)}</div>
+                </div>
+                <div className="flex flex-col items-center flex-1">
+                  <div className="text-xs text-white/60 mb-1">Invested</div>
+                  <div className="font-bold">{formatUSDShort(dcaResult.totalInvested)}</div>
+                </div>
+                <div className="flex flex-col items-center flex-1">
+                  <div className="text-xs text-white/60 mb-1">Gains</div>
+                  <div className="font-bold">{dcaResult.totalBTC.toFixed(6)}</div>
+                </div>
+              </div>
             )}
           </Card>
-          <Card label="Tuned DCA Performance" value={tunedDCA} />
+          <Card label="Tuned DCA Performance">
+            {loading || !tunedDCAResult ? (
+              <div className="text-4xl font-bold mb-2">--</div>
+            ) : (
+              <div className="flex flex-row items-center justify-between w-full gap-4 text-base">
+                <div className="flex flex-col items-center flex-1">
+                  <div className="text-xs text-white/60 mb-1">Value</div>
+                  <div className="font-bold">{formatUSDShort(tunedDCAResult.finalValue)}</div>
+                </div>
+                <div className={"flex flex-col items-center flex-1 " + (tunedDCAResult.finalValue - tunedDCAResult.totalInvested >= 0 ? 'text-green-400' : 'text-red-400')}>
+                  <div className="text-xs text-white/60 mb-1">Profit</div>
+                  <div className="font-bold">{formatUSDShort(tunedDCAResult.finalValue - tunedDCAResult.totalInvested)}</div>
+                </div>
+                <div className={"flex flex-col items-center flex-1 " + (tunedDCAResult.percentReturn >= 0 ? 'text-green-400' : 'text-red-400')}>
+                  <div className="text-xs text-white/60 mb-1">Return</div>
+                  <div className="font-bold">{formatPercent(tunedDCAResult.percentReturn)}</div>
+                </div>
+                <div className="flex flex-col items-center flex-1">
+                  <div className="text-xs text-white/60 mb-1">Invested</div>
+                  <div className="font-bold">{formatUSDShort(tunedDCAResult.totalInvested)}</div>
+                </div>
+                <div className="flex flex-col items-center flex-1">
+                  <div className="text-xs text-white/60 mb-1">Gains</div>
+                  <div className="font-bold">{tunedDCAResult.totalBTC.toFixed(6)}</div>
+                </div>
+              </div>
+            )}
+          </Card>
         </div>
         <div className="flex flex-col flex-1 w-full p-4 gap-4">
           {/* More content and charts will go here */}
