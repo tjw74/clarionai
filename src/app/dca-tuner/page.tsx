@@ -178,9 +178,9 @@ export default function DCATunerPage() {
             ) : (
               <>
                 <div className="text-2xl font-bold mb-2">{formatUSDShort(dcaResult.finalValue)}</div>
+                <div className={"text-base mb-2 " + (dcaResult.percentReturn >= 0 ? 'text-green-400' : 'text-red-400')}>Return: {formatPercent(dcaResult.percentReturn)}</div>
                 <div className="text-base text-white/70 mb-1">Total Invested: <span className="text-white">{formatUSDShort(dcaResult.totalInvested)}</span></div>
                 <div className="text-base text-white/70 mb-1">BTC Accumulated: <span className="text-white">{dcaResult.totalBTC.toFixed(6)}</span></div>
-                <div className="text-base text-white/70 mb-1">Return: <span className={dcaResult.percentReturn >= 0 ? 'text-green-400' : 'text-red-400'}>{formatPercent(dcaResult.percentReturn)}</span></div>
               </>
             )}
           </Card>
