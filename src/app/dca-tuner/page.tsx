@@ -253,8 +253,9 @@ export default function DCATunerPage() {
   // Chart data for price line chart
   const priceChartData = useMemo(() => {
     if (!ohlcData.length) return null;
-    const labels = ohlcData.map((_, i) => i);
-    const prices = ohlcData.map(ohlc => Array.isArray(ohlc) ? ohlc[ohlc.length - 1] : null);
+    const sliced = getTimeFrameSlice(ohlcData, timeFrame);
+    const labels = sliced.map((_, i) => i);
+    const prices = sliced.map(ohlc => Array.isArray(ohlc) ? ohlc[ohlc.length - 1] : null);
     return {
       labels,
       datasets: [
@@ -268,12 +269,13 @@ export default function DCATunerPage() {
         },
       ],
     };
-  }, [ohlcData]);
+  }, [ohlcData, timeFrame]);
 
   // Chart data for Z-score histogram
   const zScoreChartData = useMemo(() => {
     if (!soprData.length) return null;
-    const zscores = getZScores(soprData);
+    const sliced = getTimeFrameSlice(soprData, timeFrame);
+    const zscores = getZScores(sliced);
     const { bins, counts } = getZScoreHistogram(zscores, 0.2);
     const total = zscores.length;
     return {
@@ -286,7 +288,7 @@ export default function DCATunerPage() {
         },
       ],
     };
-  }, [soprData]);
+  }, [soprData, timeFrame]);
 
   const chartOptions = {
     responsive: true,
@@ -297,7 +299,30 @@ export default function DCATunerPage() {
     },
     scales: {
       x: { ticks: { color: '#fff' }, grid: { color: 'rgba(255,255,255,0.1)' } },
-      y: { ticks: { color: '#fff' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+      y: {
+        ticks: {
+          color: '#fff',
+          callback: function(tickValue: string | number) {
+            const value = typeof tickValue === 'string' ? parseFloat(tickValue) : tickValue;
+            if (isNaN(value)) return tickValue;
+            // Helper to format with or without decimal
+            const formatShort = (num: number, suffix: string) => {
+              const rounded = Math.round(num * 10) / 10;
+              return Number.isInteger(rounded)
+                ? `$${rounded}${suffix}`
+                : `$${rounded.toFixed(1)}${suffix}`;
+            };
+            if (value >= 1e9) return formatShort(value / 1e9, 'B');
+            if (value >= 1e6) return formatShort(value / 1e6, 'M');
+            if (value >= 1e3) return formatShort(value / 1e3, 'K');
+            const rounded = Math.round(value * 10) / 10;
+            return Number.isInteger(rounded)
+              ? `$${rounded}`
+              : `$${rounded.toFixed(1)}`;
+          },
+        },
+        grid: { color: 'rgba(255,255,255,0.1)' },
+      },
     },
   };
 
