@@ -1,11 +1,15 @@
 'use client';
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 
 function formatUSDShort(value: number): string {
   if (value >= 1e9) return `$${(value / 1e9).toFixed(2)}B`;
   if (value >= 1e6) return `$${(value / 1e6).toFixed(2)}M`;
   if (value >= 1e3) return `$${(value / 1e3).toFixed(2)}K`;
   return `$${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+}
+
+function formatPercent(value: number): string {
+  return `${value > 0 ? '+' : ''}${value.toFixed(2)}%`;
 }
 
 function Card({ label, value, children }: { label: string; value?: string | number | null; children?: React.ReactNode }) {
@@ -28,14 +32,28 @@ const TIME_FRAMES = [
   { label: '12 Years', value: '12y' },
 ];
 
+function getTimeFrameSlice(ohlcData: any[], timeFrame: string) {
+  if (!Array.isArray(ohlcData) || ohlcData.length === 0) return ohlcData;
+  if (timeFrame === 'all') return ohlcData;
+  const daysMap: Record<string, number> = {
+    '2y': 365 * 2,
+    '4y': 365 * 4,
+    '8y': 365 * 8,
+    '12y': 365 * 12,
+  };
+  const days = daysMap[timeFrame];
+  return ohlcData.slice(-days);
+}
+
 export default function DCATunerPage() {
   const [closePrice, setClosePrice] = useState<number | null>(null);
   const [sopr, setSopr] = useState<number | null>(null);
+  const [ohlcData, setOhlcData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [budget, setBudget] = useState<number>(100);
   const [budgetInput, setBudgetInput] = useState<string>('100');
-  const [timeFrame, setTimeFrame] = useState<string>('all');
+  const [timeFrame, setTimeFrame] = useState<string>('4y');
 
   useEffect(() => {
     async function fetchData() {
@@ -47,9 +65,10 @@ export default function DCATunerPage() {
           fetch('https://brk.openonchain.dev/api/vecs/dateindex-to-adjusted-spent-output-profit-ratio'),
         ]);
         if (!ohlcRes.ok || !soprRes.ok) throw new Error('Failed to fetch');
-        const ohlcData = await ohlcRes.json();
+        const ohlc = await ohlcRes.json();
         const soprData = await soprRes.json();
-        const lastOhlc = ohlcData[ohlcData.length - 1];
+        setOhlcData(ohlc);
+        const lastOhlc = ohlc[ohlc.length - 1];
         const lastClose = Array.isArray(lastOhlc) ? lastOhlc[lastOhlc.length - 1] : null;
         const lastSopr = soprData[soprData.length - 1];
         setClosePrice(typeof lastClose === 'number' ? lastClose : null);
@@ -78,8 +97,33 @@ export default function DCATunerPage() {
     setTimeFrame(e.target.value);
   };
 
-  // Placeholder for DCA performance results
-  const straightDCA = '--';
+  // Regular DCA calculation
+  const dcaResult = useMemo(() => {
+    if (!ohlcData.length || !budget || loading || error) return null;
+    const sliced = getTimeFrameSlice(ohlcData, timeFrame);
+    let totalBTC = 0;
+    let totalInvested = 0;
+    for (let i = 0; i < sliced.length; i++) {
+      const ohlc = sliced[i];
+      const close = Array.isArray(ohlc) ? ohlc[ohlc.length - 1] : null;
+      if (typeof close !== 'number' || close <= 0) continue;
+      const btcBought = budget / close;
+      totalBTC += btcBought;
+      totalInvested += budget;
+    }
+    const finalClose = Array.isArray(sliced[sliced.length - 1]) ? sliced[sliced.length - 1][sliced[sliced.length - 1].length - 1] : null;
+    if (!finalClose || totalInvested === 0) return null;
+    const finalValue = totalBTC * finalClose;
+    const percentReturn = ((finalValue - totalInvested) / totalInvested) * 100;
+    return {
+      totalBTC,
+      totalInvested,
+      finalValue,
+      percentReturn,
+    };
+  }, [ohlcData, budget, timeFrame, loading, error]);
+
+  // Placeholder for tuned DCA
   const tunedDCA = '--';
 
   return (
@@ -128,7 +172,18 @@ export default function DCATunerPage() {
         </div>
         {/* Second row: 2 cards in a grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full px-8">
-          <Card label="Straight DCA Performance" value={straightDCA} />
+          <Card label="DCA Performance">
+            {loading || !dcaResult ? (
+              <div className="text-4xl font-bold mb-2">--</div>
+            ) : (
+              <>
+                <div className="text-2xl font-bold mb-2">{formatUSDShort(dcaResult.finalValue)}</div>
+                <div className="text-base text-white/70 mb-1">Total Invested: <span className="text-white">{formatUSDShort(dcaResult.totalInvested)}</span></div>
+                <div className="text-base text-white/70 mb-1">BTC Accumulated: <span className="text-white">{dcaResult.totalBTC.toFixed(6)}</span></div>
+                <div className="text-base text-white/70 mb-1">Return: <span className={dcaResult.percentReturn >= 0 ? 'text-green-400' : 'text-red-400'}>{formatPercent(dcaResult.percentReturn)}</span></div>
+              </>
+            )}
+          </Card>
           <Card label="Tuned DCA Performance" value={tunedDCA} />
         </div>
         <div className="flex flex-col flex-1 w-full p-4 gap-4">
