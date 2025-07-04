@@ -1,5 +1,11 @@
 'use client';
 import React, { useEffect, useState, useMemo } from "react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 function formatUSDShort(value: number): string {
   if (value >= 1e9) return `$${(value / 1e9).toFixed(2)}B`;
@@ -285,6 +291,20 @@ export default function DCATunerPage() {
               </div>
             )}
           </Card>
+        </div>
+        {/* Proof of Work Accordion */}
+        <div className="w-full px-8">
+          <Accordion type="single" collapsible className="shadow-lg">
+            <AccordionItem value="pow">
+              <AccordionTrigger>Proof of Work</AccordionTrigger>
+              <AccordionContent>
+                <p className="mb-4"><strong>DCA (Dollar Cost Averaging):</strong> Each day, a fixed USD amount is used to buy BTC at the closing price. Over time, this accumulates BTC and smooths out price volatility. The results show your total invested, BTC gained, and profit if you held until today.</p>
+                <p className="mb-4"><strong>Tuned DCA:</strong> Instead of a fixed amount, the daily investment is adjusted based on the aSOPR metric's Z-score. When aSOPR is low (statistically cheap), more is invested; when high, less is invested. The adjustment uses 0.5 standard deviation steps, with a sensitivity parameter, and is clamped to avoid extreme values. This aims to accumulate more BTC and improve returns by buying more during statistically favorable periods.</p>
+                <p className="mb-4"><strong>Interactions:</strong> You can change the time frame and daily budget. All calculations update instantly, and the chart and cards reflect both strategies for easy comparison.</p>
+                <p className="mb-2"><strong>Performance Cards:</strong> Show profit, return, invested, BTC gain, and value for each strategy. Profit and return are color-coded for clarity.</p>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
         <div className="flex flex-col flex-1 w-full p-4 gap-4">
           {/* More content and charts will go here */}
