@@ -232,25 +232,26 @@ export default function DCATunerPage() {
               <div className="text-4xl font-bold mb-2">--</div>
             ) : (
               <div className="flex flex-row items-center justify-between w-full gap-4 text-base">
-                <div className="flex flex-col items-center flex-1">
-                  <div className="text-xs text-white/60 mb-1">Value</div>
-                  <div className="font-bold">{formatUSDShort(dcaResult.finalValue)}</div>
-                </div>
+                {/* Profit (large, first) */}
                 <div className={"flex flex-col items-center flex-1 " + (dcaResult.finalValue - dcaResult.totalInvested >= 0 ? 'text-green-400' : 'text-red-400')}>
                   <div className="text-xs text-white/60 mb-1">Profit</div>
-                  <div className="font-bold">{formatUSDShort(dcaResult.finalValue - dcaResult.totalInvested)}</div>
+                  <div className="text-3xl font-extrabold leading-tight">{formatUSDShort(dcaResult.finalValue - dcaResult.totalInvested)}</div>
+                  <div className={"text-sm font-semibold mt-1 " + (dcaResult.percentReturn >= 0 ? 'text-green-300' : 'text-red-300')}>Return <span className="ml-1">{formatPercent(dcaResult.percentReturn)}</span></div>
                 </div>
-                <div className={"flex flex-col items-center flex-1 " + (dcaResult.percentReturn >= 0 ? 'text-green-400' : 'text-red-400')}>
-                  <div className="text-xs text-white/60 mb-1">Return</div>
-                  <div className="font-bold">{formatPercent(dcaResult.percentReturn)}</div>
-                </div>
+                {/* Invested */}
                 <div className="flex flex-col items-center flex-1">
                   <div className="text-xs text-white/60 mb-1">Invested</div>
                   <div className="font-bold">{formatUSDShort(dcaResult.totalInvested)}</div>
                 </div>
+                {/* BTC Gain */}
                 <div className="flex flex-col items-center flex-1">
-                  <div className="text-xs text-white/60 mb-1">Gains</div>
+                  <div className="text-xs text-white/60 mb-1">BTC Gain</div>
                   <div className="font-bold">{dcaResult.totalBTC.toFixed(6)}</div>
+                </div>
+                {/* Value */}
+                <div className="flex flex-col items-center flex-1">
+                  <div className="text-xs text-white/60 mb-1">Value</div>
+                  <div className="font-bold">{formatUSDShort(dcaResult.finalValue)}</div>
                 </div>
               </div>
             )}
@@ -260,25 +261,26 @@ export default function DCATunerPage() {
               <div className="text-4xl font-bold mb-2">--</div>
             ) : (
               <div className="flex flex-row items-center justify-between w-full gap-4 text-base">
-                <div className="flex flex-col items-center flex-1">
-                  <div className="text-xs text-white/60 mb-1">Value</div>
-                  <div className="font-bold">{formatUSDShort(tunedDCAResult.finalValue)}</div>
-                </div>
+                {/* Profit (large, first) */}
                 <div className={"flex flex-col items-center flex-1 " + (tunedDCAResult.finalValue - tunedDCAResult.totalInvested >= 0 ? 'text-green-400' : 'text-red-400')}>
                   <div className="text-xs text-white/60 mb-1">Profit</div>
-                  <div className="font-bold">{formatUSDShort(tunedDCAResult.finalValue - tunedDCAResult.totalInvested)}</div>
+                  <div className="text-3xl font-extrabold leading-tight">{formatUSDShort(tunedDCAResult.finalValue - tunedDCAResult.totalInvested)}</div>
+                  <div className={"text-sm font-semibold mt-1 " + (tunedDCAResult.percentReturn >= 0 ? 'text-green-300' : 'text-red-300')}>Return <span className="ml-1">{formatPercent(tunedDCAResult.percentReturn)}</span></div>
                 </div>
-                <div className={"flex flex-col items-center flex-1 " + (tunedDCAResult.percentReturn >= 0 ? 'text-green-400' : 'text-red-400')}>
-                  <div className="text-xs text-white/60 mb-1">Return</div>
-                  <div className="font-bold">{formatPercent(tunedDCAResult.percentReturn)}</div>
-                </div>
+                {/* Invested */}
                 <div className="flex flex-col items-center flex-1">
                   <div className="text-xs text-white/60 mb-1">Invested</div>
                   <div className="font-bold">{formatUSDShort(tunedDCAResult.totalInvested)}</div>
                 </div>
+                {/* BTC Gain */}
                 <div className="flex flex-col items-center flex-1">
-                  <div className="text-xs text-white/60 mb-1">Gains</div>
+                  <div className="text-xs text-white/60 mb-1">BTC Gain</div>
                   <div className="font-bold">{tunedDCAResult.totalBTC.toFixed(6)}</div>
+                </div>
+                {/* Value */}
+                <div className="flex flex-col items-center flex-1">
+                  <div className="text-xs text-white/60 mb-1">Value</div>
+                  <div className="font-bold">{formatUSDShort(tunedDCAResult.finalValue)}</div>
                 </div>
               </div>
             )}
