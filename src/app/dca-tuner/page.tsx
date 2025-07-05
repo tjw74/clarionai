@@ -18,7 +18,9 @@ import {
   Tooltip,
   Legend,
   Title,
+  TimeScale,
 } from 'chart.js';
+import 'chartjs-adapter-date-fns';
 
 ChartJS.register(
   CategoryScale,
@@ -28,7 +30,8 @@ ChartJS.register(
   BarElement,
   Tooltip,
   Legend,
-  Title
+  Title,
+  TimeScale,
 );
 
 function formatUSDShort(value: number): string {
@@ -256,16 +259,20 @@ export default function DCATunerPage() {
 
   // Chart data for price line chart
   const priceChartData = useMemo(() => {
-    if (!ohlcData.length) return null;
+    if (!ohlcData.length || !timestamps.length) return null;
     const sliced = getTimeFrameSlice(ohlcData, timeFrame);
-    const labels = sliced.map((_, i) => i);
-    const prices = sliced.map(ohlc => Array.isArray(ohlc) ? ohlc[ohlc.length - 1] : null);
+    const tsSliced = getTimeFrameSlice(timestamps, timeFrame);
+    const data = sliced.map((ohlc, i) => {
+      const close = Array.isArray(ohlc) ? ohlc[ohlc.length - 1] : null;
+      const t = tsSliced[i];
+      if (typeof close !== 'number' || typeof t !== 'number') return null;
+      return { x: new Date(t * 1000), y: close };
+    }).filter(Boolean);
     return {
-      labels,
       datasets: [
         {
           label: 'BTC Price',
-          data: prices,
+          data,
           borderColor: '#60a5fa',
           backgroundColor: 'rgba(96,165,250,0.1)',
           pointRadius: 0,
@@ -273,7 +280,7 @@ export default function DCATunerPage() {
         },
       ],
     };
-  }, [ohlcData, timeFrame]);
+  }, [ohlcData, timestamps, timeFrame]);
 
   // Chart data for Z-score histogram
   const zScoreChartData = useMemo(() => {
@@ -302,7 +309,16 @@ export default function DCATunerPage() {
       tooltip: { mode: 'index' as const, intersect: false },
     },
     scales: {
-      x: { ticks: { color: '#fff' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+      x: {
+        type: 'time' as const,
+        time: {
+          unit: 'year' as const,
+          displayFormats: { year: 'yyyy' },
+          tooltipFormat: 'yyyy',
+        },
+        ticks: { color: '#fff', autoSkip: true, maxTicksLimit: 10 },
+        grid: { color: 'rgba(255,255,255,0.1)' },
+      },
       y: {
         ticks: {
           color: '#fff',
