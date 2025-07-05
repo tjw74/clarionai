@@ -277,6 +277,10 @@ export default function DCATunerPage() {
           backgroundColor: 'rgba(96,165,250,0.1)',
           pointRadius: 0,
           tension: 0.2,
+          pointStyle: 'circle',
+          pointBackgroundColor: '#60a5fa',
+          pointBorderColor: '#60a5fa',
+          pointBorderWidth: 0,
         },
       ],
     };
@@ -304,7 +308,16 @@ export default function DCATunerPage() {
   const chartOptions = {
     responsive: true,
     plugins: {
-      legend: { labels: { color: '#fff' } },
+      legend: {
+        labels: {
+          color: '#fff',
+          usePointStyle: true,
+          pointStyle: 'circle',
+          boxWidth: 10,
+          boxHeight: 10,
+          borderWidth: 0,
+        },
+      },
       tooltip: { mode: 'index' as const, intersect: false },
     },
     scales: {
