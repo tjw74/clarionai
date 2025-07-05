@@ -305,7 +305,6 @@ export default function DCATunerPage() {
     responsive: true,
     plugins: {
       legend: { labels: { color: '#fff' } },
-      title: { display: false },
       tooltip: { mode: 'index' as const, intersect: false },
     },
     scales: {
@@ -468,26 +467,18 @@ export default function DCATunerPage() {
         {/* Chart section: two charts side by side */}
         <div className="w-full px-8 flex flex-col lg:flex-row gap-8">
           <div className="flex-1">
-            <Card label="BTC Price Chart">
+            <Card label="BTC Price Chart" icon={<TrendingUp className="w-6 h-6 text-white/60" />}>
               {priceChartData ? (
-                <Line data={priceChartData} options={{ ...chartOptions, plugins: { ...chartOptions.plugins, title: { display: true, text: 'BTC Price', color: '#fff' } } }} height={300} />
+                <Line data={priceChartData} options={chartOptions} height={300} />
               ) : (
                 <div className="text-white/60 text-center py-12">No data</div>
               )}
             </Card>
           </div>
           <div className="flex-1">
-            <Card label="Z-score Distribution">
+            <Card label="Z-score Distribution" icon={<Activity className="w-6 h-6 text-white/60" />}>
               {zScoreChartData ? (
-                <Bar data={zScoreChartData} options={{
-                  ...chartOptions,
-                  plugins: { ...chartOptions.plugins, title: { display: true, text: 'Z-score Distribution', color: '#fff' } },
-                  scales: {
-                    ...chartOptions.scales,
-                    y: { ...chartOptions.scales.y, title: { display: true, text: '% of Days', color: '#fff' } },
-                    x: { ...chartOptions.scales.x, title: { display: true, text: 'Z-score', color: '#fff' } },
-                  },
-                }} height={300} />
+                <Bar data={zScoreChartData} options={chartOptions} height={300} />
               ) : (
                 <div className="text-white/60 text-center py-12">No data</div>
               )}
