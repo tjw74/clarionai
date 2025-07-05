@@ -143,24 +143,49 @@ export default function DCATunerPage() {
   const [budget, setBudget] = useState<number>(100);
   const [budgetInput, setBudgetInput] = useState<string>('100');
   const [timeFrame, setTimeFrame] = useState<string>('4y');
+  const [marketCap, setMarketCap] = useState<number[]>([]);
+  const [realizedCap, setRealizedCap] = useState<number[]>([]);
+  const [mvrv, setMvrv] = useState<number[]>([]);
+  const [mvrvZ, setMvrvZ] = useState<number[]>([]);
 
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
       setError(null);
       try {
-        const [ohlcRes, soprRes, tsRes] = await Promise.all([
+        const [ohlcRes, soprRes, tsRes, marketCapRes, realizedCapRes] = await Promise.all([
           fetch('https://brk.openonchain.dev/api/vecs/dateindex-to-ohlc'),
           fetch('https://brk.openonchain.dev/api/vecs/dateindex-to-adjusted-spent-output-profit-ratio'),
           fetch('https://brk.openonchain.dev/api/vecs/dateindex-to-timestamp'),
+          fetch('https://brk.openonchain.dev/api/vecs/dateindex-to-marketcap'),
+          fetch('https://brk.openonchain.dev/api/vecs/dateindex-to-realized-cap'),
         ]);
-        if (!ohlcRes.ok || !soprRes.ok || !tsRes.ok) throw new Error('Failed to fetch');
+        if (!ohlcRes.ok || !soprRes.ok || !tsRes.ok || !marketCapRes.ok || !realizedCapRes.ok) throw new Error('Failed to fetch');
         const ohlc = await ohlcRes.json();
         const soprData = await soprRes.json();
         const tsData = await tsRes.json();
+        const marketCapData = await marketCapRes.json();
+        const realizedCapData = await realizedCapRes.json();
         setOhlcData(ohlc);
         setSoprData(soprData);
         setTimestamps(tsData);
+        setMarketCap(marketCapData);
+        setRealizedCap(realizedCapData);
+        // Calculate MVRV ratio (market cap / realized cap)
+        const mvrvArr: number[] = Array.isArray(marketCapData) && Array.isArray(realizedCapData) && marketCapData.length === realizedCapData.length
+          ? marketCapData.map((mc: number, i: number) => (realizedCapData[i] > 0 && isFinite(mc) && isFinite(realizedCapData[i])) ? mc / realizedCapData[i] : NaN)
+          : [];
+        const filteredMvrvArr: number[] = mvrvArr.filter((v: number) => typeof v === 'number' && isFinite(v));
+        setMvrv(filteredMvrvArr);
+        // Calculate Z-score of MVRV ratio
+        if (filteredMvrvArr.length > 0) {
+          const mean = filteredMvrvArr.reduce((a: number, b: number) => a + b, 0) / filteredMvrvArr.length;
+          const std = Math.sqrt(filteredMvrvArr.reduce((a: number, b: number) => a + (b - mean) ** 2, 0) / filteredMvrvArr.length);
+          const mvrvZArr: number[] = filteredMvrvArr.map((v: number) => (std > 0) ? (v - mean) / std : 0);
+          setMvrvZ(mvrvZArr);
+        } else {
+          setMvrvZ([]);
+        }
         const lastOhlc = ohlc[ohlc.length - 1];
         const lastClose = Array.isArray(lastOhlc) ? lastOhlc[lastOhlc.length - 1] : null;
         const lastSopr = soprData[soprData.length - 1];
