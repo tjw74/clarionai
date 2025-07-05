@@ -133,6 +133,7 @@ export default function DCATunerPage() {
   const [sopr, setSopr] = useState<number | null>(null);
   const [ohlcData, setOhlcData] = useState<any[]>([]);
   const [soprData, setSoprData] = useState<number[]>([]);
+  const [timestamps, setTimestamps] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [budget, setBudget] = useState<number>(100);
@@ -144,15 +145,18 @@ export default function DCATunerPage() {
       setLoading(true);
       setError(null);
       try {
-        const [ohlcRes, soprRes] = await Promise.all([
+        const [ohlcRes, soprRes, tsRes] = await Promise.all([
           fetch('https://brk.openonchain.dev/api/vecs/dateindex-to-ohlc'),
           fetch('https://brk.openonchain.dev/api/vecs/dateindex-to-adjusted-spent-output-profit-ratio'),
+          fetch('https://brk.openonchain.dev/api/vecs/dateindex-to-timestamp'),
         ]);
-        if (!ohlcRes.ok || !soprRes.ok) throw new Error('Failed to fetch');
+        if (!ohlcRes.ok || !soprRes.ok || !tsRes.ok) throw new Error('Failed to fetch');
         const ohlc = await ohlcRes.json();
         const soprData = await soprRes.json();
+        const tsData = await tsRes.json();
         setOhlcData(ohlc);
         setSoprData(soprData);
+        setTimestamps(tsData);
         const lastOhlc = ohlc[ohlc.length - 1];
         const lastClose = Array.isArray(lastOhlc) ? lastOhlc[lastOhlc.length - 1] : null;
         const lastSopr = soprData[soprData.length - 1];
