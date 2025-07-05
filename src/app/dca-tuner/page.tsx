@@ -359,6 +359,42 @@ export default function DCATunerPage() {
     },
   };
 
+  const chartOptionsZScore = {
+    responsive: true,
+    plugins: {
+      legend: {
+        labels: {
+          color: '#fff',
+          usePointStyle: true,
+          pointStyle: 'circle',
+          boxWidth: 10,
+          boxHeight: 10,
+          borderWidth: 0,
+        },
+      },
+      tooltip: { mode: 'index' as const, intersect: false },
+    },
+    scales: {
+      x: {
+        type: 'category' as const,
+        ticks: { color: '#fff' },
+        grid: { color: 'rgba(255,255,255,0.1)' },
+      },
+      y: {
+        type: 'linear' as const,
+        ticks: {
+          color: '#fff',
+          callback: function(tickValue: string | number) {
+            const value = typeof tickValue === 'string' ? parseFloat(tickValue) : tickValue;
+            if (isNaN(value)) return tickValue;
+            return value + '%';
+          },
+        },
+        grid: { color: 'rgba(255,255,255,0.1)' },
+      },
+    },
+  };
+
   return (
     <div className="bg-black text-white min-h-screen w-full flex flex-col border-b border-white/20">
       <header className="py-8 border-b border-white/20 w-full flex items-center justify-center px-8">
@@ -492,7 +528,7 @@ export default function DCATunerPage() {
           <div className="flex-1">
             <Card label="Z-score Distribution" icon={<Activity className="w-6 h-6 text-white/60" />}>
               {zScoreChartData ? (
-                <Bar data={zScoreChartData} options={chartOptions} height={300} />
+                <Bar data={zScoreChartData} options={chartOptionsZScore} height={300} />
               ) : (
                 <div className="text-white/60 text-center py-12">No data</div>
               )}
