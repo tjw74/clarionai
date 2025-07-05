@@ -573,6 +573,80 @@ export default function DCATunerPage() {
                 <p className="mb-4"><strong>Tuned DCA:</strong> Instead of a fixed amount, the daily investment is adjusted based on the aSOPR metric's Z-score. When aSOPR is low (statistically cheap), more is invested; when high, less is invested. The adjustment uses 0.5 standard deviation steps, with a sensitivity parameter, and is clamped to avoid extreme values. This aims to accumulate more BTC and improve returns by buying more during statistically favorable periods.</p>
                 <p className="mb-4"><strong>Interactions:</strong> You can change the time frame and daily budget. All calculations update instantly, and the chart and cards reflect both strategies for easy comparison.</p>
                 <p className="mb-2"><strong>Performance Cards:</strong> Show profit, return, invested, BTC gain, and value for each strategy. Profit and return are color-coded for clarity.</p>
+                {/* Infographic: Z-score zones and purchase adjustment */}
+                <div className="flex flex-col items-center justify-center w-full mb-8">
+                  {/* Horizontal bar chart for Z-score zones and purchase multipliers */}
+                  <div className="w-full max-w-2xl">
+                    {(() => {
+                      // Generate zones from +2.0σ to -2.0σ in 0.5 steps
+                      const zones = [2, 1.5, 1, 0.5, 0, -0.5, -1, -1.5, -2];
+                      const labels = zones.map(z => (z > 0 ? `+${z}σ` : z === 0 ? '0' : `${z}σ`));
+                      const k = 0.25;
+                      const clamp = (val: number, min: number, max: number) => Math.max(min, Math.min(max, val));
+                      const multipliers = zones.map(z => clamp(1 - k * z, 0.1, 2.0));
+                      const backgroundColor = zones.map(z =>
+                        z >= 1.5 ? '#f87171' :
+                        z >= 0.5 ? '#fbbf24' :
+                        z === 0 ? '#e5e7eb' :
+                        z >= -1.0 ? '#4ade80' :
+                        '#22c55e'
+                      );
+                      return (
+                        <Bar
+                          data={{
+                            labels,
+                            datasets: [
+                              {
+                                label: 'Purchase Multiplier',
+                                data: multipliers,
+                                backgroundColor,
+                                borderRadius: 12,
+                                barPercentage: 0.45,
+                                categoryPercentage: 0.7,
+                              },
+                            ],
+                          }}
+                          options={{
+                            indexAxis: 'y',
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                              legend: { display: false },
+                              tooltip: {
+                                callbacks: {
+                                  label: (ctx) => `${ctx.dataset.label}: ${ctx.raw}x`,
+                                },
+                              },
+                            },
+                            scales: {
+                              x: {
+                                min: 0,
+                                max: 2.2,
+                                ticks: {
+                                  color: '#fff',
+                                  callback: (v) => `${v}x`,
+                                  font: { size: 16 },
+                                },
+                                grid: { color: 'rgba(255,255,255,0.1)' },
+                              },
+                              y: {
+                                ticks: {
+                                  color: '#fff',
+                                  font: { size: 18, weight: 'bold' },
+                                },
+                                grid: { color: 'rgba(255,255,255,0.1)' },
+                              },
+                            },
+                          }}
+                          height={340}
+                        />
+                      );
+                    })()}
+                  </div>
+                  <div className="text-white/80 text-center mt-2 text-lg max-w-2xl">
+                    <span className="font-semibold">How it works:</span> The daily purchase amount is adjusted based on the Z-score zone. When the Z-score is low (top), you buy more. When it is high (bottom), you buy less. The multiplier (e.g., 2x, 1.5x, 1x, 0.5x, 0.2x) shows how much you buy in each zone, relative to your base amount.
+                  </div>
+                </div>
               </AccordionContent>
             </AccordionItem>
           </Accordion>
