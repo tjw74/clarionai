@@ -275,6 +275,7 @@ export default function DCATunerPage() {
           data,
           borderColor: '#60a5fa',
           backgroundColor: 'rgba(96,165,250,0.1)',
+          borderWidth: 1,
           pointRadius: 0,
           tension: 0.2,
           pointStyle: 'circle',
