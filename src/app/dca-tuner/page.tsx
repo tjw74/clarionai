@@ -50,11 +50,12 @@ type CardProps = {
   value?: string | number | null;
   icon?: React.ReactNode;
   children?: React.ReactNode;
+  className?: string;
 };
 
-function Card({ label, value, icon, children }: CardProps) {
+function Card({ label, value, icon, children, className }: CardProps) {
   return (
-    <div className="bg-[#18181b] border border-white/10 rounded-2xl p-6 shadow-lg flex flex-col items-center min-h-[120px] w-full relative">
+    <div className={`bg-[#18181b] border border-white/10 rounded-2xl p-6 shadow-lg flex flex-col items-center min-h-[120px] w-full relative ${className || ''}`}>
       {icon && (
         <span className="absolute top-4 right-4 text-white/60">{icon}</span>
       )}
@@ -306,6 +307,68 @@ export default function DCATunerPage() {
     };
   }, [soprData, timeFrame]);
 
+  // Add Z-score trace data for its own panel
+  const zScoreTraceData = useMemo(() => {
+    if (!timestamps.length || !soprData.length) return null;
+    const tsSliced = getTimeFrameSlice(timestamps, timeFrame);
+    const soprSliced = getTimeFrameSlice(soprData, timeFrame);
+    const zscores = getZScores(soprSliced);
+    const data = tsSliced.map((t, i) => {
+      if (typeof t !== 'number' || typeof zscores[i] !== 'number') return null;
+      return { x: new Date(t * 1000), y: zscores[i] };
+    }).filter(Boolean);
+    return {
+      datasets: [
+        {
+          label: 'Z-score',
+          data,
+          borderColor: '#fff',
+          backgroundColor: 'rgba(255,255,255,0.1)',
+          borderWidth: 1,
+          pointRadius: 0,
+          tension: 0.2,
+        },
+      ],
+    };
+  }, [timestamps, soprData, timeFrame]);
+
+  const zScorePanelOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        labels: {
+          color: '#fff',
+          usePointStyle: true,
+          pointStyle: 'circle',
+          boxWidth: 10,
+          boxHeight: 10,
+          borderWidth: 0,
+        },
+      },
+      tooltip: { mode: 'index' as const, intersect: false },
+    },
+    scales: {
+      x: {
+        type: 'time' as const,
+        time: {
+          unit: 'year' as const,
+          displayFormats: { year: 'yyyy' },
+          tooltipFormat: 'yyyy',
+        },
+        ticks: { color: '#fff', autoSkip: true, maxTicksLimit: 10 },
+        grid: { color: 'rgba(255,255,255,0.1)' },
+      },
+      y: {
+        position: 'left' as const,
+        ticks: {
+          color: '#fff',
+        },
+        grid: { color: 'rgba(255,255,255,0.1)' },
+      },
+    },
+  };
+
   const chartOptions = {
     responsive: true,
     plugins: {
@@ -514,26 +577,42 @@ export default function DCATunerPage() {
             </AccordionItem>
           </Accordion>
         </div>
-        {/* Chart section: two charts side by side */}
-        <div className="w-full px-8 flex flex-col lg:flex-row gap-8">
-          <div className="flex-1">
-            <Card label="BTC Price Chart" icon={<TrendingUp className="w-6 h-6 text-white/60" />}>
-              {priceChartData ? (
-                <Line data={priceChartData} options={chartOptions} height={300} />
-              ) : (
-                <div className="text-white/60 text-center py-12">No data</div>
-              )}
-            </Card>
-          </div>
-          <div className="flex-1">
-            <Card label="Z-score Distribution" icon={<Activity className="w-6 h-6 text-white/60" />}>
-              {zScoreChartData ? (
-                <Bar data={zScoreChartData} options={chartOptionsZScore} height={300} />
-              ) : (
-                <div className="text-white/60 text-center py-12">No data</div>
-              )}
-            </Card>
-          </div>
+        {/* Chart section: all charts in accordion */}
+        <div className="w-full px-8 flex flex-col gap-8">
+          <Accordion type="single" collapsible className="shadow-lg">
+            <AccordionItem value="charts">
+              <AccordionTrigger>Charts</AccordionTrigger>
+              <AccordionContent>
+                <div className="flex flex-col gap-8">
+                  <Card label="BTC Price Chart" icon={<TrendingUp className="w-6 h-6 text-white/60" />} className="w-full p-0">
+                    <div className="w-full h-[350px]">
+                      {priceChartData ? (
+                        <Line data={priceChartData} options={chartOptions} />
+                      ) : (
+                        <div className="text-white/60 text-center py-12">No data</div>
+                      )}
+                    </div>
+                  </Card>
+                  <Card label="Z-score Trace" icon={<Activity className="w-6 h-6 text-white/60" />}>
+                    <div className="h-[350px] w-full">
+                      {zScoreTraceData ? (
+                        <Line data={zScoreTraceData} options={zScorePanelOptions} />
+                      ) : (
+                        <div className="text-white/60 text-center py-12">No data</div>
+                      )}
+                    </div>
+                  </Card>
+                  <Card label="Z-score Distribution" icon={<Activity className="w-6 h-6 text-white/60" />}>
+                    {zScoreChartData ? (
+                      <Bar data={zScoreChartData} options={chartOptionsZScore} height={300} />
+                    ) : (
+                      <div className="text-white/60 text-center py-12">No data</div>
+                    )}
+                  </Card>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
         <div className="flex flex-col flex-1 w-full p-4 gap-4">
           {/* More content and charts will go here */}
