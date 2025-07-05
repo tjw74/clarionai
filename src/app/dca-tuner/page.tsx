@@ -194,15 +194,17 @@ export default function DCATunerPage() {
   const dcaResult = useMemo(() => {
     if (!ohlcData.length || !budget || loading || error) return null;
     const sliced = getTimeFrameSlice(ohlcData, timeFrame);
+    const numDays = sliced.length;
+    const totalBudget = budget * numDays;
     let totalBTC = 0;
     let totalInvested = 0;
-    for (let i = 0; i < sliced.length; i++) {
+    for (let i = 0; i < numDays; i++) {
       const ohlc = sliced[i];
       const close = Array.isArray(ohlc) ? ohlc[ohlc.length - 1] : null;
       if (typeof close !== 'number' || close <= 0) continue;
-      const btcBought = budget / close;
+      const btcBought = (totalBudget / numDays) / close;
       totalBTC += btcBought;
-      totalInvested += budget;
+      totalInvested += totalBudget / numDays;
     }
     const finalClose = Array.isArray(sliced[sliced.length - 1]) ? sliced[sliced.length - 1][sliced[sliced.length - 1].length - 1] : null;
     if (!finalClose || totalInvested === 0) return null;
@@ -216,21 +218,20 @@ export default function DCATunerPage() {
     };
   }, [ohlcData, budget, timeFrame, loading, error]);
 
-  // Tuned DCA calculation (stepwise Z-score zones)
+  // Tuned DCA calculation (stepwise Z-score zones, fixed total spend)
   const tunedDCAResult = useMemo(() => {
     if (!ohlcData.length || !budget || loading || error) return null;
     if (!Array.isArray(soprData) || soprData.length !== ohlcData.length) return null;
     const slicedOhlc = getTimeFrameSlice(ohlcData, timeFrame);
     const slicedSopr = getTimeFrameSlice(soprData, timeFrame);
     if (!slicedSopr.length || slicedSopr.length !== slicedOhlc.length) return null;
+    const numDays = slicedOhlc.length;
+    const totalBudget = budget * numDays;
     const { means, stds } = rollingStats(slicedSopr);
     const k = 0.25;
-    let totalBTC = 0;
-    let totalInvested = 0;
-    for (let i = 0; i < slicedOhlc.length; i++) {
-      const ohlc = slicedOhlc[i];
-      const close = Array.isArray(ohlc) ? ohlc[ohlc.length - 1] : null;
-      if (typeof close !== 'number' || close <= 0) continue;
+    // Calculate all multipliers first
+    let multipliers: number[] = [];
+    for (let i = 0; i < numDays; i++) {
       const soprVal = slicedSopr[i];
       const mean = means[i];
       const std = stds[i];
@@ -241,7 +242,18 @@ export default function DCATunerPage() {
       zone = Math.max(-4, Math.min(4, zone));
       let multiplier = 1 - k * zone;
       multiplier = Math.max(0.1, Math.min(2.0, multiplier));
-      const tunedBudget = budget * multiplier;
+      multipliers.push(multiplier);
+    }
+    // Normalize multipliers so their sum equals numDays
+    const multiplierSum = multipliers.reduce((a, b) => a + b, 0);
+    const normalizedMultipliers = multipliers.map(m => m * numDays / multiplierSum);
+    let totalBTC = 0;
+    let totalInvested = 0;
+    for (let i = 0; i < numDays; i++) {
+      const ohlc = slicedOhlc[i];
+      const close = Array.isArray(ohlc) ? ohlc[ohlc.length - 1] : null;
+      if (typeof close !== 'number' || close <= 0) continue;
+      const tunedBudget = totalBudget * (normalizedMultipliers[i] / numDays);
       const btcBought = tunedBudget / close;
       totalBTC += btcBought;
       totalInvested += tunedBudget;
@@ -642,6 +654,39 @@ export default function DCATunerPage() {
                         />
                       );
                     })()}
+                  </div>
+                  {/* Summary table: stddev zone to multiplier and change in daily spend */}
+                  <div className="w-full max-w-2xl flex flex-col items-center justify-center mt-6 mb-2">
+                    <table className="w-full text-center border-separate border-spacing-y-1">
+                      <thead>
+                        <tr>
+                          <th className="text-white/90 text-base font-semibold py-2">Zone (stddev)</th>
+                          <th className="text-white/90 text-base font-semibold py-2">Multiplier</th>
+                          <th className="text-white/90 text-base font-semibold py-2">Change in Daily Spend</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(() => {
+                          const k = 0.25;
+                          const zones = [2, 1.5, 1, 0.5, 0, -0.5, -1, -1.5, -2];
+                          return zones.map(z => {
+                            const multiplier = Math.max(0.1, Math.min(2.0, 1 - k * z));
+                            const change = ((multiplier - 1) * 100).toFixed(0);
+                            return (
+                              <tr key={z} className="bg-[#232326]">
+                                <td className="py-1 text-white/80 text-base font-mono">{z > 0 ? `+${z}` : z === 0 ? '0' : z}</td>
+                                <td className="py-1 text-white/80 text-base font-mono">{multiplier.toFixed(2)}x</td>
+                                <td className={
+                                  parseFloat(change) > 0 ? 'text-green-400' : parseFloat(change) < 0 ? 'text-red-400' : 'text-white/80'
+                                }>
+                                  {parseFloat(change) > 0 ? '+' : ''}{change}%
+                                </td>
+                              </tr>
+                            );
+                          });
+                        })()}
+                      </tbody>
+                    </table>
                   </div>
                   <div className="text-white/80 text-center mt-2 text-lg max-w-2xl">
                     <span className="font-semibold">How it works:</span> The daily purchase amount is adjusted based on the Z-score zone. When the Z-score is low (top), you buy more. When it is high (bottom), you buy less. The multiplier (e.g., 2x, 1.5x, 1x, 0.5x, 0.2x) shows how much you buy in each zone, relative to your base amount.
