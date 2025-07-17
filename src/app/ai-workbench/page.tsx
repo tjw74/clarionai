@@ -271,12 +271,6 @@ export default function AIWorkbench() {
                         style={{ width: '100%', height: '100%' }}
                         config={{ displayModeBar: false }}
                       />
-                      {/* Performance indicator */}
-                      {processedData?.downsampled && (
-                        <div className="absolute top-2 right-2 bg-black/80 text-white/60 text-xs px-2 py-1 rounded">
-                          Downsampled for performance
-                        </div>
-                      )}
                     </div>
                     {/* Minimalist time range slider below chart */}
                     {metricData && sliderRange && (
