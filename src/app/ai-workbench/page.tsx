@@ -33,25 +33,17 @@ export default function AIWorkbench() {
         </div>
       </header>
       <div className="flex flex-col flex-1 p-4 gap-4">
-        {/* 4 resizable quadrants */}
+        {/* 2 main panels: left (unified), right (vertical split) */}
         <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0 border border-white/20 bg-black">
-          {/* Left side (vertical split) */}
+          {/* Unified Left Panel */}
           <ResizablePanel defaultSize={50} minSize={20} className="min-w-0">
-            <ResizablePanelGroup direction="vertical" className="h-full min-h-0">
-              {/* Top Left */}
-              <ResizablePanel defaultSize={50} minSize={20} className="min-h-0">
-                <div className="flex flex-col h-full w-full items-center justify-center p-2 bg-black border-b border-white/20">
-                  <span className="text-white text-lg font-semibold">Top Left ({metricGroups[selectedIndex].name})</span>
-                </div>
-              </ResizablePanel>
-              <ResizableHandle withHandle className="border border-white/20 border-[1px]" />
-              {/* Bottom Left */}
-              <ResizablePanel defaultSize={50} minSize={20} className="min-h-0">
-                <div className="flex flex-col h-full w-full items-center justify-center p-2 bg-black">
-                  <span className="text-white text-lg font-semibold">Bottom Left ({metricGroups[selectedIndex].name})</span>
-                </div>
-              </ResizablePanel>
-            </ResizablePanelGroup>
+            <div className="flex flex-col h-full w-full items-center justify-center p-2 bg-black border-r border-white/20">
+              <span className="text-white text-lg font-semibold mb-4">{metricGroups[selectedIndex].name} (Unified Chart)</span>
+              {/* Unified Plotly chart for metrics + z-scores will go here */}
+              <div className="w-full h-full flex items-center justify-center">
+                <span className="text-white/60">[Unified Plotly Chart Placeholder]</span>
+              </div>
+            </div>
           </ResizablePanel>
           <ResizableHandle withHandle className="border border-white/20 border-[1px]" />
           {/* Right side (vertical split) */}
