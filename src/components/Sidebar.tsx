@@ -64,13 +64,6 @@ export default function Sidebar() {
           <Bot className="w-5 h-5" />
           AI Workbench
         </Link>
-        <Link
-          href="/dca-tuner"
-          className="flex items-center gap-3 px-3 py-2 rounded transition-colors border border-transparent hover:border-white/40 text-base"
-        >
-          <Sliders className="w-5 h-5" />
-          DCA Tuner
-        </Link>
       </nav>
     </aside>
   );
