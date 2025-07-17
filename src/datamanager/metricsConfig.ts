@@ -24,6 +24,133 @@ export const METRICS_LIST = [
   'short-term-holders-coinblocks-destroyed',
 ];
 
+// Metric groups configuration
+export const METRIC_GROUPS = [
+  {
+    name: 'Price Models',
+    description: 'Core price metrics and models',
+    metrics: [
+      {
+        key: 'close',
+        name: 'Price',
+        color: '#33B1FF',
+        yaxis: 'y2', // Right Y-axis (logarithmic)
+        zScore: true,
+      },
+      {
+        key: 'realized-price',
+        name: 'Realized Price',
+        color: '#00bcd4',
+        yaxis: 'y2',
+        zScore: true,
+      },
+      {
+        key: 'true-market-mean',
+        name: 'True Market Mean',
+        color: '#ff9800',
+        yaxis: 'y2',
+        zScore: true,
+      },
+      {
+        key: 'vaulted-price',
+        name: 'Vaulted Price',
+        color: '#8bc34a',
+        yaxis: 'y2',
+        zScore: true,
+      },
+      {
+        key: '200d-sma',
+        name: '200d SMA',
+        color: '#e91e63',
+        yaxis: 'y2',
+        zScore: true,
+      },
+    ],
+  },
+  {
+    name: 'Profit & Loss',
+    description: 'Profit and loss metrics for holders',
+    metrics: [
+      {
+        key: 'short-term-holders-realized-profit',
+        name: 'STH Realized Profit',
+        color: '#4CAF50',
+        yaxis: 'y2',
+        zScore: true,
+      },
+      {
+        key: 'short-term-holders-negative-realized-loss',
+        name: 'STH Realized Loss',
+        color: '#f44336',
+        yaxis: 'y2',
+        zScore: true,
+      },
+      {
+        key: 'short-term-holders-unrealized-profit',
+        name: 'STH Unrealized Profit',
+        color: '#8BC34A',
+        yaxis: 'y2',
+        zScore: true,
+      },
+      {
+        key: 'short-term-holders-negative-unrealized-loss',
+        name: 'STH Unrealized Loss',
+        color: '#FF5722',
+        yaxis: 'y2',
+        zScore: true,
+      },
+      {
+        key: 'adjusted-spent-output-profit-ratio',
+        name: 'Profit Ratio',
+        color: '#9C27B0',
+        yaxis: 'y',
+        zScore: true,
+      },
+    ],
+  },
+  {
+    name: 'Network Activity',
+    description: 'Network and on-chain activity metrics',
+    metrics: [
+      {
+        key: 'liveliness',
+        name: 'Liveliness',
+        color: '#2196F3',
+        yaxis: 'y',
+        zScore: true,
+      },
+      {
+        key: 'short-term-holders-supply',
+        name: 'STH Supply',
+        color: '#FF9800',
+        yaxis: 'y2',
+        zScore: true,
+      },
+      {
+        key: 'short-term-holders-utxo-count',
+        name: 'STH UTXO Count',
+        color: '#607D8B',
+        yaxis: 'y',
+        zScore: true,
+      },
+      {
+        key: 'sell-side-risk-ratio',
+        name: 'Sell-Side Risk',
+        color: '#E91E63',
+        yaxis: 'y',
+        zScore: true,
+      },
+      {
+        key: 'short-term-holders-coinblocks-destroyed',
+        name: 'STH Coins Destroyed',
+        color: '#795548',
+        yaxis: 'y',
+        zScore: true,
+      },
+    ],
+  },
+];
+
 // Derived metrics with formulas
 export const DERIVED_METRICS = [
   {

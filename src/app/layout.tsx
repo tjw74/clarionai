@@ -36,7 +36,7 @@ export default function RootLayout({
           {/* Sidebar */}
           <Sidebar />
           {/* Main content */}
-          <main className="flex-1 bg-black text-white border-l border-white/20 min-h-screen">
+          <main className="flex flex-col flex-1 min-h-0 bg-black text-white border-l border-white/20">
             {children}
           </main>
         </div>
