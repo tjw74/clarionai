@@ -65,173 +65,171 @@ export default function AIWorkbench() {
         {/* 2 main panels: left (unified), right (vertical split) */}
         <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0 border border-white/20 bg-black">
           {/* Unified Left Panel */}
-          <ResizablePanel defaultSize={50} minSize={20} className="min-w-0">
-            <div className="flex flex-col h-full w-full items-center justify-center p-2 bg-black border-r border-white/20">
-              <div className="w-full h-full flex-1 flex items-center justify-center">
-                {loading || !metricData ? (
-                  <span className="text-white/60">Loading chart...</span>
-                ) : (
-                  (() => {
-                    // Slice data according to sliderRange
-                    const [start, end] = sliderRange || [0, metricData.dates.length - 1];
-                    const x = metricData.dates.slice(start, end + 1);
-                    const getY = (key: string) => metricData.metrics[key]?.slice(start, end + 1) || [];
-                    // Z-score traces (left Y axis, linear)
-                    const zPrice = calculateZScores(metricData.metrics['close'] || [], 1460).slice(start, end + 1);
-                    const zRealized = calculateZScores(metricData.metrics['realized-price'] || [], 1460).slice(start, end + 1);
-                    const zTmm = calculateZScores(metricData.metrics['true-market-mean'] || [], 1460).slice(start, end + 1);
-                    const zVaulted = calculateZScores(metricData.metrics['vaulted-price'] || [], 1460).slice(start, end + 1);
-                    const zSma = calculateZScores(metricData.metrics['200d-sma'] || [], 1460).slice(start, end + 1);
-                    return (
-                      <Plot
-                        data={[
-                          {
-                            x,
-                            y: getY('close'),
-                            name: 'Price',
-                            type: 'scatter',
-                            mode: 'lines',
-                            line: { color: '#33B1FF', width: 1 },
-                            yaxis: 'y2',
-                          },
-                          {
-                            x,
-                            y: getY('realized-price'),
-                            name: 'Realized Price',
-                            type: 'scatter',
-                            mode: 'lines',
-                            line: { color: '#00bcd4', width: 1 },
-                            yaxis: 'y2',
-                          },
-                          {
-                            x,
-                            y: getY('true-market-mean'),
-                            name: 'True Market Mean',
-                            type: 'scatter',
-                            mode: 'lines',
-                            line: { color: '#ff9800', width: 1 },
-                            yaxis: 'y2',
-                          },
-                          {
-                            x,
-                            y: getY('vaulted-price'),
-                            name: 'Vaulted Price',
-                            type: 'scatter',
-                            mode: 'lines',
-                            line: { color: '#8bc34a', width: 1 },
-                            yaxis: 'y2',
-                          },
-                          {
-                            x,
-                            y: getY('200d-sma'),
-                            name: '200d SMA',
-                            type: 'scatter',
-                            mode: 'lines',
-                            line: { color: '#e91e63', width: 1 },
-                            yaxis: 'y2',
-                          },
-                          // Z-score traces (left Y axis, linear)
-                          {
-                            x,
-                            y: zPrice,
-                            name: 'Price Z',
-                            type: 'scatter',
-                            mode: 'lines',
-                            line: { color: '#33B1FF', width: 1 },
-                            yaxis: 'y',
-                          },
-                          {
-                            x,
-                            y: zRealized,
-                            name: 'Realized Price Z',
-                            type: 'scatter',
-                            mode: 'lines',
-                            line: { color: '#00bcd4', width: 1 },
-                            yaxis: 'y',
-                          },
-                          {
-                            x,
-                            y: zTmm,
-                            name: 'True Market Mean Z',
-                            type: 'scatter',
-                            mode: 'lines',
-                            line: { color: '#ff9800', width: 1 },
-                            yaxis: 'y',
-                          },
-                          {
-                            x,
-                            y: zVaulted,
-                            name: 'Vaulted Price Z',
-                            type: 'scatter',
-                            mode: 'lines',
-                            line: { color: '#8bc34a', width: 1 },
-                            yaxis: 'y',
-                          },
-                          {
-                            x,
-                            y: zSma,
-                            name: '200d SMA Z',
-                            type: 'scatter',
-                            mode: 'lines',
-                            line: { color: '#e91e63', width: 1 },
-                            yaxis: 'y',
-                          },
-                        ]}
-                        layout={{
-                          autosize: true,
-                          paper_bgcolor: 'black',
-                          plot_bgcolor: 'black',
-                          font: { color: 'white' },
-                          xaxis: {
-                            color: 'white',
-                            gridcolor: '#333',
-                            title: 'Date',
-                          },
-                          yaxis: {
-                            title: 'Z-Score',
-                            type: 'linear',
-                            side: 'left',
-                            color: 'white',
-                            gridcolor: '#333',
-                            showgrid: true,
-                            showline: false,
-                            zeroline: false,
-                          },
-                          yaxis2: {
-                            title: 'Price (log10)',
-                            type: 'log',
-                            side: 'right',
-                            color: 'white',
-                            gridcolor: '#333',
-                            tickformat: '.2s',
-                            tickprefix: '$',
-                            showgrid: true,
-                            showline: false,
-                            zeroline: false,
-                            exponentformat: 'power',
-                            showexponent: 'all',
-                            dtick: 1,
-                            overlaying: 'y',
-                          },
-                          margin: { l: 40, r: 40, t: 20, b: 40 },
-                          legend: {
-                            orientation: 'h',
-                            x: 0,
-                            y: 1.08,
-                            xanchor: 'left',
-                            yanchor: 'bottom',
-                            font: { color: 'white', size: 12 },
-                            itemwidth: 10,
-                          },
-                        }}
-                        useResizeHandler={true}
-                        style={{ width: '100%', height: '100%' }}
-                        config={{ displayModeBar: false }}
-                      />
-                    );
-                  })()
-                )}
-              </div>
+          <ResizablePanel defaultSize={50} minSize={20} className="flex-1 min-h-0 min-w-0 flex flex-col">
+            <div className="flex-1 min-h-0 min-w-0 flex flex-col p-2 bg-black border-r border-white/20">
+              {(() => {
+                if (loading || !metricData) {
+                  return <span className="text-white/60">Loading chart...</span>;
+                }
+                // Slice data according to sliderRange
+                const [start, end] = sliderRange || [0, metricData.dates.length - 1];
+                const x = metricData.dates.slice(start, end + 1);
+                const getY = (key: string) => metricData.metrics[key]?.slice(start, end + 1) || [];
+                // Z-score traces (left Y axis, linear)
+                const zPrice = calculateZScores(metricData.metrics['close'] || [], 1460).slice(start, end + 1);
+                const zRealized = calculateZScores(metricData.metrics['realized-price'] || [], 1460).slice(start, end + 1);
+                const zTmm = calculateZScores(metricData.metrics['true-market-mean'] || [], 1460).slice(start, end + 1);
+                const zVaulted = calculateZScores(metricData.metrics['vaulted-price'] || [], 1460).slice(start, end + 1);
+                const zSma = calculateZScores(metricData.metrics['200d-sma'] || [], 1460).slice(start, end + 1);
+                return (
+                  <Plot
+                    data={[
+                      {
+                        x,
+                        y: getY('close'),
+                        name: 'Price',
+                        type: 'scatter',
+                        mode: 'lines',
+                        line: { color: '#33B1FF', width: 1 },
+                        yaxis: 'y2',
+                      },
+                      {
+                        x,
+                        y: getY('realized-price'),
+                        name: 'Realized Price',
+                        type: 'scatter',
+                        mode: 'lines',
+                        line: { color: '#00bcd4', width: 1 },
+                        yaxis: 'y2',
+                      },
+                      {
+                        x,
+                        y: getY('true-market-mean'),
+                        name: 'True Market Mean',
+                        type: 'scatter',
+                        mode: 'lines',
+                        line: { color: '#ff9800', width: 1 },
+                        yaxis: 'y2',
+                      },
+                      {
+                        x,
+                        y: getY('vaulted-price'),
+                        name: 'Vaulted Price',
+                        type: 'scatter',
+                        mode: 'lines',
+                        line: { color: '#8bc34a', width: 1 },
+                        yaxis: 'y2',
+                      },
+                      {
+                        x,
+                        y: getY('200d-sma'),
+                        name: '200d SMA',
+                        type: 'scatter',
+                        mode: 'lines',
+                        line: { color: '#e91e63', width: 1 },
+                        yaxis: 'y2',
+                      },
+                      // Z-score traces (left Y axis, linear)
+                      {
+                        x,
+                        y: zPrice,
+                        name: 'Price Z',
+                        type: 'scatter',
+                        mode: 'lines',
+                        line: { color: '#33B1FF', width: 1 },
+                        yaxis: 'y',
+                      },
+                      {
+                        x,
+                        y: zRealized,
+                        name: 'Realized Price Z',
+                        type: 'scatter',
+                        mode: 'lines',
+                        line: { color: '#00bcd4', width: 1 },
+                        yaxis: 'y',
+                      },
+                      {
+                        x,
+                        y: zTmm,
+                        name: 'True Market Mean Z',
+                        type: 'scatter',
+                        mode: 'lines',
+                        line: { color: '#ff9800', width: 1 },
+                        yaxis: 'y',
+                      },
+                      {
+                        x,
+                        y: zVaulted,
+                        name: 'Vaulted Price Z',
+                        type: 'scatter',
+                        mode: 'lines',
+                        line: { color: '#8bc34a', width: 1 },
+                        yaxis: 'y',
+                      },
+                      {
+                        x,
+                        y: zSma,
+                        name: '200d SMA Z',
+                        type: 'scatter',
+                        mode: 'lines',
+                        line: { color: '#e91e63', width: 1 },
+                        yaxis: 'y',
+                      },
+                    ]}
+                    layout={{
+                      autosize: true,
+                      autoresize: true,
+                      paper_bgcolor: 'black',
+                      plot_bgcolor: 'black',
+                      font: { color: 'white' },
+                      xaxis: {
+                        color: 'white',
+                        gridcolor: '#333',
+                        title: 'Date',
+                      },
+                      yaxis: {
+                        title: 'Z-Score',
+                        type: 'linear',
+                        side: 'left',
+                        color: 'white',
+                        gridcolor: '#333',
+                        showgrid: true,
+                        showline: false,
+                        zeroline: false,
+                      },
+                      yaxis2: {
+                        title: 'Price (log10)',
+                        type: 'log',
+                        side: 'right',
+                        color: 'white',
+                        gridcolor: '#333',
+                        tickformat: '.2s',
+                        tickprefix: '$',
+                        showgrid: true,
+                        showline: false,
+                        zeroline: false,
+                        exponentformat: 'power',
+                        showexponent: 'all',
+                        dtick: 1,
+                        overlaying: 'y',
+                      },
+                      margin: { l: 40, r: 40, t: 20, b: 40 },
+                      legend: {
+                        orientation: 'h',
+                        x: 0,
+                        y: 1.08,
+                        xanchor: 'left',
+                        yanchor: 'bottom',
+                        font: { color: 'white', size: 12 },
+                        itemwidth: 10,
+                      },
+                    }}
+                    useResizeHandler={true}
+                    style={{ width: '100%', height: '100%' }}
+                    config={{ displayModeBar: false }}
+                  />
+                );
+              })()}
               {/* Minimalist time range slider below chart */}
               {metricData && sliderRange && (
                 <div className="w-full flex justify-center items-center mt-2">
