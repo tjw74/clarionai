@@ -22,6 +22,15 @@ export const METRICS_LIST = [
   'short-term-holders-unrealized-profit',
   'short-term-holders-negative-unrealized-loss',
   'short-term-holders-coinblocks-destroyed',
+  // New comprehensive profit/loss metrics
+  'long-term-holders-adjusted-spent-output-profit-ratio',
+  'realized-profit',
+  'negative-realized-loss',
+  'net-realized-profit-and-loss',
+  'unrealized-profit',
+  'negative-unrealized-loss',
+  'net-unrealized-profit-and-loss',
+  'long-term-holders-realized-cap',
 ];
 
 // Metric groups configuration
@@ -69,8 +78,75 @@ export const METRIC_GROUPS = [
   },
   {
     name: 'Profit & Loss',
-    description: 'Profit and loss metrics for holders',
+    description: 'Comprehensive profit and loss metrics for network and holders',
     metrics: [
+      // Network-wide SOPR metrics
+      {
+        key: 'adjusted-spent-output-profit-ratio',
+        name: 'Network SOPR',
+        color: '#2196F3',
+        yaxis: 'y',
+        zScore: true,
+      },
+      {
+        key: 'short-term-holders-adjusted-spent-output-profit-ratio',
+        name: 'STH SOPR',
+        color: '#03A9F4',
+        yaxis: 'y',
+        zScore: true,
+      },
+      {
+        key: 'long-term-holders-adjusted-spent-output-profit-ratio',
+        name: 'LTH SOPR',
+        color: '#00BCD4',
+        yaxis: 'y',
+        zScore: true,
+      },
+      // Network-wide realized P&L
+      {
+        key: 'realized-profit',
+        name: 'Network Realized Profit',
+        color: '#4CAF50',
+        yaxis: 'y2',
+        zScore: true,
+      },
+      {
+        key: 'negative-realized-loss',
+        name: 'Network Realized Loss',
+        color: '#f44336',
+        yaxis: 'y2',
+        zScore: true,
+      },
+      {
+        key: 'net-realized-profit-and-loss',
+        name: 'Net Realized P&L',
+        color: '#9C27B0',
+        yaxis: 'y2',
+        zScore: true,
+      },
+      // Network-wide unrealized P&L
+      {
+        key: 'unrealized-profit',
+        name: 'Network Unrealized Profit',
+        color: '#8BC34A',
+        yaxis: 'y2',
+        zScore: true,
+      },
+      {
+        key: 'negative-unrealized-loss',
+        name: 'Network Unrealized Loss',
+        color: '#FF5722',
+        yaxis: 'y2',
+        zScore: true,
+      },
+      {
+        key: 'net-unrealized-profit-and-loss',
+        name: 'Net Unrealized P&L',
+        color: '#795548',
+        yaxis: 'y2',
+        zScore: true,
+      },
+      // STH specific metrics
       {
         key: 'short-term-holders-realized-profit',
         name: 'STH Realized Profit',
@@ -99,11 +175,26 @@ export const METRIC_GROUPS = [
         yaxis: 'y2',
         zScore: true,
       },
+      // Realized cap metrics
       {
-        key: 'adjusted-spent-output-profit-ratio',
-        name: 'Profit Ratio',
-        color: '#9C27B0',
-        yaxis: 'y',
+        key: 'realized-cap',
+        name: 'Network Realized Cap',
+        color: '#607D8B',
+        yaxis: 'y2',
+        zScore: true,
+      },
+      {
+        key: 'short-term-holders-realized-cap',
+        name: 'STH Realized Cap',
+        color: '#795548',
+        yaxis: 'y2',
+        zScore: true,
+      },
+      {
+        key: 'long-term-holders-realized-cap',
+        name: 'LTH Realized Cap',
+        color: '#9E9E9E',
+        yaxis: 'y2',
         zScore: true,
       },
     ],
