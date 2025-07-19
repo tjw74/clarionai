@@ -497,8 +497,29 @@ export default function AIWorkbench() {
                         <button
                           onClick={handleAnalysis}
                           disabled={isAnalyzing}
-                          className="text-blue-400 hover:text-blue-300 underline cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="text-white px-3 py-1 rounded-md text-sm font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          style={{
+                            backgroundColor: isAnalyzing ? 'rgb(31, 96, 196)' : 'rgb(31, 96, 196)',
+                            opacity: isAnalyzing ? 0.5 : 1,
+                            animation: isAnalyzing ? 'none' : 'breathe 3s ease-in-out infinite'
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isAnalyzing) {
+                              e.currentTarget.style.backgroundColor = 'rgb(41, 106, 206)';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isAnalyzing) {
+                              e.currentTarget.style.backgroundColor = 'rgb(31, 96, 196)';
+                            }
+                          }}
                         >
+                          <style jsx>{`
+                            @keyframes breathe {
+                              0%, 100% { transform: scale(1); }
+                              50% { transform: scale(1.02); }
+                            }
+                          `}</style>
                           {isAnalyzing ? 'Analyzing...' : 'Analysis'}
                         </button>
                       </h3>
