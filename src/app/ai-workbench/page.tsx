@@ -4,8 +4,34 @@ import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from "@/componen
 import dynamic from 'next/dynamic';
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 import { fetchAllMetrics, type MetricData, calculateZScores } from '../../datamanager';
-import { METRIC_GROUPS } from '../../datamanager/metricsConfig';
+import { METRIC_GROUPS, METRICS_LIST, METRIC_DISPLAY_NAMES } from '../../datamanager/metricsConfig';
 import * as Slider from '@radix-ui/react-slider';
+import { Check, ChevronsUpDown, Send, Bot, User, Settings, Key } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { List, AutoSizer } from 'react-virtualized';
 
 // Debounce function for resize events
 function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
@@ -45,21 +71,52 @@ function downsampleData<T>(data: T[], maxPoints: number = 1000): T[] {
 }
 
 export default function AIWorkbench() {
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const handlePrev = () => setSelectedIndex(i => Math.max(i - 1, 0));
-  const handleNext = () => setSelectedIndex(i => Math.min(i + 1, METRIC_GROUPS.length - 1));
+  const [selectedGroups, setSelectedGroups] = useState<string[]>(['Price Models']);
+  const [selectedIndividualMetrics, setSelectedIndividualMetrics] = useState<string[]>([]);
+  const [open, setOpen] = useState(false);
   const [metricData, setMetricData] = useState<MetricData | null>(null);
   const [loading, setLoading] = useState(true);
   const [sliderRange, setSliderRange] = useState<[number, number] | null>(null);
   const [plotPanelKey, setPlotPanelKey] = useState(0);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Get current metric group
-  const currentGroup = METRIC_GROUPS[selectedIndex];
+  // AI Analyst state
+  const [selectedProvider, setSelectedProvider] = useState<string>('openai');
+  const [apiKey, setApiKey] = useState<string>('');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [chatMessages, setChatMessages] = useState<Array<{
+    id: string;
+    type: 'user' | 'assistant';
+    content: string;
+    timestamp: Date;
+  }>>([]);
+  const [userMessage, setUserMessage] = useState('');
+
+  // Helper function to get all selected metric keys (groups + individual, deduplicated)
+  const getSelectedMetricKeys = useCallback(() => {
+    const groupMetrics = new Set<string>();
+    const individualMetrics = new Set(selectedIndividualMetrics);
+    
+    // Add all metrics from selected groups
+    selectedGroups.forEach(groupName => {
+      const group = METRIC_GROUPS.find(g => g.name === groupName);
+      if (group) {
+        group.metrics.forEach(metric => {
+          groupMetrics.add(metric.key);
+        });
+      }
+    });
+    
+    // Combine and deduplicate
+    return [...groupMetrics, ...individualMetrics];
+  }, [selectedGroups, selectedIndividualMetrics]);
+
+  // Get currently selected metrics for display
+  const selectedMetricKeys = getSelectedMetricKeys();
 
   // Memoized data processing
   const processedData = useMemo(() => {
-    if (!metricData || !sliderRange) return null;
+    if (!metricData || !sliderRange || selectedMetricKeys.length === 0) return null;
     
     const [start, end] = sliderRange;
     const x = metricData.dates.slice(start, end + 1);
@@ -68,18 +125,19 @@ export default function AIWorkbench() {
     const needsDownsampling = x.length > 1000;
     const maxPoints = 1000;
     
-    // Pre-calculate all z-scores for current group metrics
+    // Pre-calculate all z-scores for selected metrics
     const zScores: Record<string, number[]> = {};
     const slicedMetrics: Record<string, number[]> = {};
     
-    currentGroup.metrics.forEach(metric => {
+    selectedMetricKeys.forEach(metricKey => {
       // Get the metric data
-      const metricDataArray = metricData.metrics[metric.key] || [];
-      slicedMetrics[metric.key] = metricDataArray.slice(start, end + 1);
+      const metricDataArray = metricData.metrics[metricKey] || [];
+      slicedMetrics[metricKey] = metricDataArray.slice(start, end + 1);
       
-      // Calculate z-scores if needed
-      if (metric.zScore) {
-        zScores[metric.key] = calculateZScores(metricDataArray, 1460).slice(start, end + 1);
+      // Find metric config to check if z-score is needed
+      const metricConfig = METRIC_GROUPS.flatMap(g => g.metrics).find(m => m.key === metricKey);
+      if (metricConfig?.zScore) {
+        zScores[metricKey] = calculateZScores(metricDataArray, 1460).slice(start, end + 1);
       }
     });
     
@@ -89,10 +147,10 @@ export default function AIWorkbench() {
       const downsampledZScores: Record<string, number[]> = {};
       const downsampledMetrics: Record<string, number[]> = {};
       
-      currentGroup.metrics.forEach(metric => {
-        downsampledMetrics[metric.key] = downsampleData(slicedMetrics[metric.key], maxPoints);
-        if (metric.zScore) {
-          downsampledZScores[metric.key] = downsampleData(zScores[metric.key], maxPoints);
+      selectedMetricKeys.forEach(metricKey => {
+        downsampledMetrics[metricKey] = downsampleData(slicedMetrics[metricKey], maxPoints);
+        if (zScores[metricKey]) {
+          downsampledZScores[metricKey] = downsampleData(zScores[metricKey], maxPoints);
         }
       });
       
@@ -105,7 +163,7 @@ export default function AIWorkbench() {
     }
     
     return { x, zScores, slicedMetrics, downsampled: false };
-  }, [metricData, sliderRange, currentGroup]);
+  }, [metricData, sliderRange, selectedMetricKeys]);
 
   // Memoized chart data
   const chartData = useMemo(() => {
@@ -115,34 +173,38 @@ export default function AIWorkbench() {
     const traces: any[] = [];
     
     // Add metric traces
-    currentGroup.metrics.forEach(metric => {
+    selectedMetricKeys.forEach(metricKey => {
+      // Find metric config for display name and styling
+      const metricConfig = METRIC_GROUPS.flatMap(g => g.metrics).find(m => m.key === metricKey);
+      if (!metricConfig) return;
+      
       // Main metric trace
       traces.push({
         x,
-        y: slicedMetrics[metric.key],
-        name: metric.name,
+        y: slicedMetrics[metricKey],
+        name: metricConfig.name,
         type: 'scatter' as const,
         mode: 'lines' as const,
-        line: { color: metric.color, width: 1 },
-        yaxis: metric.yaxis,
+        line: { color: metricConfig.color, width: 1 },
+        yaxis: metricConfig.yaxis,
       });
       
       // Z-score trace if enabled
-      if (metric.zScore && zScores[metric.key]) {
+      if (metricConfig.zScore && zScores[metricKey]) {
         traces.push({
           x,
-          y: zScores[metric.key],
-          name: `${metric.name} Z`,
+          y: zScores[metricKey],
+          name: `${metricConfig.name} Z`,
           type: 'scatter' as const,
           mode: 'lines' as const,
-          line: { color: metric.color, width: 1 },
+          line: { color: metricConfig.color, width: 1 },
           yaxis: 'y', // Z-scores always on left Y-axis
         });
       }
     });
     
     return traces;
-  }, [processedData, currentGroup]);
+  }, [processedData, selectedMetricKeys]);
 
   // Memoized chart layout
   const chartLayout = useMemo(() => ({
@@ -229,23 +291,145 @@ export default function AIWorkbench() {
     return () => ro.disconnect();
   }, [debouncedResizeHandler]);
 
+  // AI Analysis function
+  const handleAnalysis = async () => {
+    if (!apiKey.trim()) {
+      setChatMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        type: 'assistant',
+        content: 'Please enter your API key first.',
+        timestamp: new Date()
+      }]);
+      return;
+    }
+
+    setIsAnalyzing(true);
+    setChatMessages(prev => [...prev, {
+      id: Date.now().toString(),
+      type: 'assistant',
+      content: 'Analyzing your chart...',
+      timestamp: new Date()
+    }]);
+
+    // TODO: Implement actual screenshot capture and LLM analysis
+    // For now, just simulate the process
+    setTimeout(() => {
+      setChatMessages(prev => [...prev.slice(0, -1), {
+        id: Date.now().toString(),
+        type: 'assistant',
+        content: `Analysis complete for ${selectedMetricKeys.length} metrics using ${selectedProvider}. This is a placeholder response - actual LLM integration coming soon.`,
+        timestamp: new Date()
+      }]);
+      setIsAnalyzing(false);
+    }, 2000);
+  };
+
+  // Send user message
+  const handleSendMessage = () => {
+    if (!userMessage.trim()) return;
+
+    const newMessage = {
+      id: Date.now().toString(),
+      type: 'user' as const,
+      content: userMessage,
+      timestamp: new Date()
+    };
+
+    setChatMessages(prev => [...prev, newMessage]);
+    setUserMessage('');
+
+    // TODO: Implement actual chat with LLM
+    setTimeout(() => {
+      setChatMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(),
+        type: 'assistant',
+        content: 'This is a placeholder response. Chat functionality will be implemented with the LLM integration.',
+        timestamp: new Date()
+      }]);
+    }, 1000);
+  };
+
   return (
     <div className="bg-black text-white min-h-screen w-full flex flex-col border-b border-white/20">
       <header className="py-8 border-b border-white/20 w-full flex items-center justify-between px-8">
         <h1 className="text-3xl font-bold">AI Workbench</h1>
-        {/* Metric group navigation - moved to top right */}
+        {/* Metric selection with combobox */}
         <div className="flex items-center gap-2">
-          <button onClick={handlePrev} disabled={selectedIndex === 0} className="px-3 py-1 rounded border border-white/20 bg-black text-white disabled:opacity-40">&lt;</button>
-          <select
-            value={selectedIndex}
-            onChange={e => setSelectedIndex(Number(e.target.value))}
-            className="bg-black border border-white/20 text-white rounded px-2 py-1"
-          >
-            {METRIC_GROUPS.map((group, i) => (
-              <option key={group.name} value={i}>{group.name}</option>
-            ))}
-          </select>
-          <button onClick={handleNext} disabled={selectedIndex === METRIC_GROUPS.length - 1} className="px-3 py-1 rounded border border-white/20 bg-black text-white disabled:opacity-40">&gt;</button>
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={open}
+                className="w-[300px] justify-between bg-black border-white/20 text-white hover:bg-white/10"
+              >
+                {selectedMetricKeys.length > 0 
+                  ? `${selectedMetricKeys.length} metric${selectedMetricKeys.length > 1 ? 's' : ''} selected`
+                  : "Select metrics..."}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[300px] p-0 bg-black border-white/20">
+              <Command>
+                <CommandInput placeholder="Search groups and metrics..." className="h-9" />
+                <CommandList className="max-h-[400px]">
+                  <CommandEmpty>No results found.</CommandEmpty>
+                  
+                  {/* Groups Section */}
+                  <CommandGroup heading="Groups">
+                    {METRIC_GROUPS.map((group) => (
+                      <CommandItem
+                        key={`group-${group.name}`}
+                        value={group.name}
+                        onSelect={() => {
+                          const isSelected = selectedGroups.includes(group.name);
+                          if (isSelected) {
+                            setSelectedGroups(prev => prev.filter(g => g !== group.name));
+                          } else {
+                            setSelectedGroups(prev => [...prev, group.name]);
+                          }
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            selectedGroups.includes(group.name) ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {group.name}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                  
+                  {/* Individual Metrics Section */}
+                  <CommandGroup heading="Individual Metrics">
+                    {METRICS_LIST.map((metricKey) => (
+                      <CommandItem
+                        key={`metric-${metricKey}`}
+                        value={`${METRIC_DISPLAY_NAMES[metricKey] || metricKey} ${metricKey}`}
+                        onSelect={() => {
+                          const isSelected = selectedIndividualMetrics.includes(metricKey);
+                          if (isSelected) {
+                            setSelectedIndividualMetrics(prev => prev.filter(m => m !== metricKey));
+                          } else {
+                            setSelectedIndividualMetrics(prev => [...prev, metricKey]);
+                          }
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            selectedIndividualMetrics.includes(metricKey) ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {METRIC_DISPLAY_NAMES[metricKey] || metricKey}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
       </header>
       <div className="flex flex-col flex-1 p-4 gap-4">
@@ -301,17 +485,120 @@ export default function AIWorkbench() {
           {/* Right side (vertical split) */}
           <ResizablePanel defaultSize={50} minSize={20} className="min-w-0">
             <ResizablePanelGroup direction="vertical" className="h-full min-h-0">
-              {/* Top Right */}
-              <ResizablePanel defaultSize={50} minSize={20} className="min-h-0">
-                <div className="flex flex-col h-full w-full items-center justify-center p-2 bg-black border-b border-white/20">
-                  <span className="text-white text-lg font-semibold">Top Right ({currentGroup.name})</span>
+              {/* AI Analyst Panel */}
+              <ResizablePanel defaultSize={70} minSize={30} className="min-h-0">
+                <div className="flex flex-col h-full w-full bg-black border-b border-white/20">
+                  {/* AI Analysis Header */}
+                  <div className="p-4 border-b border-white/20 bg-black">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold flex items-center gap-2">
+                        <Bot className="h-5 w-5" />
+                        AI{' '}
+                        <button
+                          onClick={handleAnalysis}
+                          disabled={isAnalyzing}
+                          className="text-blue-400 hover:text-blue-300 underline cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isAnalyzing ? 'Analyzing...' : 'Analysis'}
+                        </button>
+                      </h3>
+                      <div className="flex items-center gap-2">
+                        <Select value={selectedProvider} onValueChange={setSelectedProvider}>
+                          <SelectTrigger className="w-28 bg-black border-white/20 text-white text-sm">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-black border-white/20">
+                            <SelectItem value="openai">OpenAI</SelectItem>
+                            <SelectItem value="anthropic">Anthropic</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Input
+                          type="password"
+                          placeholder="API Key"
+                          value={apiKey}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setApiKey(e.target.value)}
+                          className="w-48 bg-black border-white/20 text-white placeholder:text-white/50 text-sm"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Chat Messages */}
+                  <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                    {chatMessages.length === 0 ? (
+                      <div className="text-center text-white/60 py-8">
+                        <Bot className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>Start by analyzing your chart or ask me anything about the metrics.</p>
+                      </div>
+                    ) : (
+                      chatMessages.map((message) => (
+                        <div
+                          key={message.id}
+                          className={cn(
+                            "flex gap-3",
+                            message.type === 'user' ? 'justify-end' : 'justify-start'
+                          )}
+                        >
+                          {message.type === 'assistant' && (
+                            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                              <Bot className="h-4 w-4 text-white" />
+                            </div>
+                          )}
+                          <div
+                            className={cn(
+                              "max-w-[80%] rounded-lg px-4 py-2",
+                              message.type === 'user'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-white/10 text-white'
+                            )}
+                          >
+                            <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                            <p className="text-xs opacity-50 mt-1">
+                              {message.timestamp.toLocaleTimeString()}
+                            </p>
+                          </div>
+                          {message.type === 'user' && (
+                            <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center flex-shrink-0">
+                              <User className="h-4 w-4 text-white" />
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  
+                  {/* Chat Input */}
+                  <div className="p-4 border-t border-white/20">
+                    <div className="flex gap-2">
+                      <Textarea
+                        placeholder="Ask me about the metrics..."
+                        value={userMessage}
+                                                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setUserMessage(e.target.value)}
+                        onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSendMessage();
+                          }
+                        }}
+                        className="flex-1 bg-black border-white/20 text-white placeholder:text-white/50 resize-none"
+                        rows={1}
+                      />
+                      <Button
+                        onClick={handleSendMessage}
+                        disabled={!userMessage.trim()}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        <Send className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </ResizablePanel>
               <ResizableHandle withHandle className="border border-white/20 border-[1px]" />
               {/* Bottom Right */}
-              <ResizablePanel defaultSize={50} minSize={20} className="min-h-0">
+              <ResizablePanel defaultSize={30} minSize={20} className="min-h-0">
                 <div className="flex flex-col h-full w-full items-center justify-center p-2 bg-black">
-                  <span className="text-white text-lg font-semibold">Bottom Right ({currentGroup.name})</span>
+                  <span className="text-white text-lg font-semibold">Bottom Right ({selectedMetricKeys.length} metrics)</span>
                 </div>
               </ResizablePanel>
             </ResizablePanelGroup>

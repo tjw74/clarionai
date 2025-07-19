@@ -33,6 +33,55 @@ export const METRICS_LIST = [
   'long-term-holders-realized-cap',
 ];
 
+// Complete mapping of metric keys to user-friendly display names
+export const METRIC_DISPLAY_NAMES: Record<string, string> = {
+  // Price metrics
+  'close': 'Price',
+  'realized-price': 'Realized Price',
+  '200d-sma': '200d SMA',
+  'true-market-mean': 'True Market Mean',
+  'vaulted-price': 'Vaulted Price',
+  
+  // Market cap metrics
+  'marketcap': 'Market Cap',
+  'realized-cap': 'Network Realized Cap',
+  
+  // SOPR metrics
+  'adjusted-spent-output-profit-ratio': 'Network SOPR',
+  'short-term-holders-adjusted-spent-output-profit-ratio': 'STH SOPR',
+  'long-term-holders-adjusted-spent-output-profit-ratio': 'LTH SOPR',
+  
+  // Risk and activity metrics
+  'sell-side-risk-ratio': 'Sell-Side Risk',
+  'liveliness': 'Liveliness',
+  
+  // Supply metrics
+  'short-term-holders-supply': 'STH Supply',
+  'short-term-holders-utxo-count': 'STH UTXO Count',
+  
+  // Realized P&L metrics
+  'realized-profit': 'Network Realized Profit',
+  'negative-realized-loss': 'Network Realized Loss',
+  'net-realized-profit-and-loss': 'Net Realized P&L',
+  'short-term-holders-realized-profit': 'STH Realized Profit',
+  'short-term-holders-negative-realized-loss': 'STH Realized Loss',
+  
+  // Unrealized P&L metrics
+  'unrealized-profit': 'Network Unrealized Profit',
+  'negative-unrealized-loss': 'Network Unrealized Loss',
+  'net-unrealized-profit-and-loss': 'Net Unrealized P&L',
+  'short-term-holders-unrealized-profit': 'STH Unrealized Profit',
+  'short-term-holders-negative-unrealized-loss': 'STH Unrealized Loss',
+  
+  // Realized cap metrics
+  'short-term-holders-realized-cap': 'STH Realized Cap',
+  'long-term-holders-realized-cap': 'LTH Realized Cap',
+  
+  // Other metrics
+  'short-term-holders-realized-price-ratio': 'STH Realized Price Ratio',
+  'short-term-holders-coinblocks-destroyed': 'STH Coins Destroyed',
+};
+
 // Metric groups configuration
 export const METRIC_GROUPS = [
   {
