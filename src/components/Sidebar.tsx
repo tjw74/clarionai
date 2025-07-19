@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import Image from "next/image";
-import { Home, Bot, Sliders } from "lucide-react";
+import { Home, Bot } from "lucide-react";
 
 export default function Sidebar() {
   const [open, setOpen] = useState(true);

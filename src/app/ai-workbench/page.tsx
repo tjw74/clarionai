@@ -6,7 +6,7 @@ const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 import { fetchAllMetrics, type MetricData, calculateZScores } from '../../datamanager';
 import { METRIC_GROUPS, METRICS_LIST, METRIC_DISPLAY_NAMES } from '../../datamanager/metricsConfig';
 import * as Slider from '@radix-ui/react-slider';
-import { Check, ChevronsUpDown, Send, Bot, User, Settings, Key } from 'lucide-react';
+import { Check, ChevronsUpDown, Send, Bot, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -31,12 +31,15 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { List, AutoSizer } from 'react-virtualized';
+// import { List, AutoSizer } from 'react-virtualized'; // Unused imports
+import html2canvas from 'html2canvas';
+import { llmService, type LLMProvider } from '@/lib/llm';
+import { getChartAnalysisPrompt, getFollowUpPrompt, type AnalysisContext } from '@/lib/prompts/analysis';
 
 // Debounce function for resize events
-function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
+function debounce<T extends (...args: unknown[]) => unknown>(func: T, wait: number): T {
   let timeout: NodeJS.Timeout;
-  return ((...args: any[]) => {
+      return ((...args: unknown[]) => {
     clearTimeout(timeout);
     timeout = setTimeout(() => func(...args), wait);
   }) as T;
@@ -170,7 +173,7 @@ export default function AIWorkbench() {
     if (!processedData) return [];
     
     const { x, zScores, slicedMetrics } = processedData;
-    const traces: any[] = [];
+    const traces: unknown[] = [];
     
     // Add metric traces
     selectedMetricKeys.forEach(metricKey => {
@@ -291,6 +294,44 @@ export default function AIWorkbench() {
     return () => ro.disconnect();
   }, [debouncedResizeHandler]);
 
+  // Screenshot capture function
+  const captureChartScreenshot = async (): Promise<string> => {
+    const chartElement = document.getElementById('ai-workbench-plot');
+    if (!chartElement) {
+      throw new Error('Chart element not found');
+    }
+
+    // Temporarily hide the time slider during capture
+    const sliderElement = chartElement.parentElement?.querySelector('.time-slider') as HTMLElement;
+    const originalDisplay = sliderElement?.style.display;
+    if (sliderElement) {
+      sliderElement.style.display = 'none';
+    }
+
+    try {
+      const canvas = await html2canvas(chartElement, {
+        backgroundColor: '#000000',
+        scale: 2, // High quality
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+      });
+
+      // Restore the time slider
+      if (sliderElement && originalDisplay !== undefined) {
+        sliderElement.style.display = originalDisplay;
+      }
+
+      return canvas.toDataURL('image/png').split(',')[1]; // Return base64 without data URL prefix
+    } catch (error) {
+      // Restore the time slider on error
+      if (sliderElement && originalDisplay !== undefined) {
+        sliderElement.style.display = originalDisplay;
+      }
+      throw error;
+    }
+  };
+
   // AI Analysis function
   const handleAnalysis = async () => {
     if (!apiKey.trim()) {
@@ -303,29 +344,96 @@ export default function AIWorkbench() {
       return;
     }
 
+    if (selectedMetricKeys.length === 0) {
+      setChatMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        type: 'assistant',
+        content: 'Please select at least one metric to analyze.',
+        timestamp: new Date()
+      }]);
+      return;
+    }
+
     setIsAnalyzing(true);
+    
+    // Add initial message
+    const analysisMessageId = Date.now().toString();
     setChatMessages(prev => [...prev, {
-      id: Date.now().toString(),
+      id: analysisMessageId,
       type: 'assistant',
-      content: 'Analyzing your chart...',
+      content: 'Capturing chart and analyzing metrics...',
       timestamp: new Date()
     }]);
 
-    // TODO: Implement actual screenshot capture and LLM analysis
-    // For now, just simulate the process
-    setTimeout(() => {
-      setChatMessages(prev => [...prev.slice(0, -1), {
-        id: Date.now().toString(),
-        type: 'assistant',
-        content: `Analysis complete for ${selectedMetricKeys.length} metrics using ${selectedProvider}. This is a placeholder response - actual LLM integration coming soon.`,
-        timestamp: new Date()
-      }]);
+    try {
+      // Debug API key
+      console.log('Analysis Debug:', {
+        provider: selectedProvider,
+        apiKeyLength: apiKey.length,
+        apiKeyPrefix: apiKey.substring(0, 10) + '...',
+        selectedMetrics: selectedMetricKeys.length
+      });
+
+      // Set API key for the selected provider
+      llmService.setAPIKey(selectedProvider as LLMProvider, apiKey);
+
+      // Capture screenshot
+      const imageBase64 = await captureChartScreenshot();
+      
+      // Debug image data
+      console.log('Image Debug:', {
+        imageSize: imageBase64.length,
+        imageSizeKB: Math.round(imageBase64.length / 1024),
+        imagePrefix: imageBase64.substring(0, 50) + '...'
+      });
+
+      // Prepare analysis context
+      const context: AnalysisContext = {
+        selectedMetrics: selectedMetricKeys,
+        metricNames: METRIC_DISPLAY_NAMES,
+        timeRange: metricData && sliderRange ? 
+          `${metricData.dates[sliderRange[0]]} to ${metricData.dates[sliderRange[1]]}` : 
+          undefined
+      };
+
+      // Get analysis prompt
+      const prompt = getChartAnalysisPrompt(context);
+
+      // Call LLM for analysis
+      const response = await llmService.analyzeChart(selectedProvider as LLMProvider, {
+        prompt,
+        imageBase64,
+        maxTokens: 1000,
+        temperature: 0.7
+      });
+
+      console.log('Analysis response:', response);
+      console.log('Response content:', response.content);
+      console.log('Response type:', typeof response.content);
+
+      // Update the message with the analysis
+      setChatMessages(prev => prev.map(msg => 
+        msg.id === analysisMessageId 
+          ? { ...msg, content: response.content }
+          : msg
+      ));
+
+    } catch (error) {
+      console.error('Analysis error:', error);
+      
+      // Update the message with error
+      setChatMessages(prev => prev.map(msg => 
+        msg.id === analysisMessageId 
+          ? { ...msg, content: `Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}` }
+          : msg
+      ));
+    } finally {
       setIsAnalyzing(false);
-    }, 2000);
+    }
   };
 
   // Send user message
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!userMessage.trim()) return;
 
     const newMessage = {
@@ -336,17 +444,57 @@ export default function AIWorkbench() {
     };
 
     setChatMessages(prev => [...prev, newMessage]);
+    const userQuestion = userMessage;
     setUserMessage('');
 
-    // TODO: Implement actual chat with LLM
-    setTimeout(() => {
-      setChatMessages(prev => [...prev, {
-        id: (Date.now() + 1).toString(),
-        type: 'assistant',
-        content: 'This is a placeholder response. Chat functionality will be implemented with the LLM integration.',
-        timestamp: new Date()
-      }]);
-    }, 1000);
+    // Add loading message
+    const loadingMessageId = (Date.now() + 1).toString();
+    setChatMessages(prev => [...prev, {
+      id: loadingMessageId,
+      type: 'assistant',
+      content: 'Thinking...',
+      timestamp: new Date()
+    }]);
+
+    try {
+      // Prepare context for follow-up
+      const context: AnalysisContext = {
+        selectedMetrics: selectedMetricKeys,
+        metricNames: METRIC_DISPLAY_NAMES,
+        timeRange: metricData && sliderRange ? 
+          `${metricData.dates[sliderRange[0]]} to ${metricData.dates[sliderRange[1]]}` : 
+          undefined
+      };
+
+      // Get follow-up prompt
+      const prompt = getFollowUpPrompt(userQuestion, context);
+
+      // Call LLM for chat response
+      const response = await llmService.chat(selectedProvider as LLMProvider, {
+        prompt,
+        maxTokens: 500,
+        temperature: 0.7
+      });
+
+      console.log('Chat response:', response);
+
+      // Update the loading message with the response
+      setChatMessages(prev => prev.map(msg => 
+        msg.id === loadingMessageId 
+          ? { ...msg, content: response.content }
+          : msg
+      ));
+
+    } catch (error) {
+      console.error('Chat error:', error);
+      
+      // Update the loading message with error
+      setChatMessages(prev => prev.map(msg => 
+        msg.id === loadingMessageId 
+          ? { ...msg, content: `Chat failed: ${error instanceof Error ? error.message : 'Unknown error'}` }
+          : msg
+      ));
+    }
   };
 
   return (
