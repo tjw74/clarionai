@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import Image from "next/image";
-import { Home, Bot } from "lucide-react";
+import { Home, Bot, TrendingUp } from "lucide-react";
 
 export default function Sidebar() {
   const [open, setOpen] = useState(true);
@@ -63,6 +63,13 @@ export default function Sidebar() {
         >
           <Bot className="w-5 h-5" />
           AI Workbench
+        </Link>
+        <Link
+          href="/dca-ranker"
+          className="flex items-center gap-3 px-3 py-2 rounded transition-colors border border-transparent hover:border-white/40 text-base"
+        >
+          <TrendingUp className="w-5 h-5" />
+          DCA Ranker
         </Link>
       </nav>
     </aside>

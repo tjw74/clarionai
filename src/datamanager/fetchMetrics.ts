@@ -12,12 +12,16 @@ export interface MetricData {
 
 // Fetch all metrics one at a time to respect API limits
 export async function fetchAllMetrics(apiBaseUrl: string = DEFAULT_API_BASE): Promise<MetricData> {
+  console.log(`Fetching ${METRICS_LIST.length} metrics individually...`);
+  
   const promises = METRICS_LIST.map(async (metric) => {
     const url = `${apiBaseUrl}/api/vecs/query?index=dateindex&ids=date,${metric}&format=json`;
+    console.log(`Fetching ${metric} from: ${url}`);
+    
     const response = await fetch(url);
     
     if (!response.ok) {
-      throw new Error(`Failed to fetch ${metric}: ${response.status}`);
+      throw new Error(`Failed to fetch ${metric}: ${response.status} ${response.statusText}`);
     }
     
     const data = await response.json();
@@ -38,6 +42,8 @@ export async function fetchAllMetrics(apiBaseUrl: string = DEFAULT_API_BASE): Pr
   results.forEach(({ metric, values }) => {
     metrics[metric] = values;
   });
+  
+  console.log(`Successfully fetched ${Object.keys(metrics).length} metrics with ${dates.length} data points`);
   
   return {
     dates,

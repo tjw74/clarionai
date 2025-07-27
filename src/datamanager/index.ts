@@ -5,4 +5,11 @@ export { calculateDerivedMetrics } from './derivedMetrics';
 export { calculateZScores, Z_SCORE_WINDOWS } from './zScore';
 export { calculateRegularDCA, calculateTunedDCA, softmaxModel, dcaModels } from './dca';
 export { METRICS_LIST, DERIVED_METRICS } from './metricsConfig';
-export { softmax } from './models/softmax'; 
+export { softmax } from './models/softmax';
+export { 
+  generateDCARankings, 
+  getTopPerformers, 
+  getPerformanceStats,
+  type DCARankingResult,
+  type DCARankingConfig 
+} from './dcaRanker'; 

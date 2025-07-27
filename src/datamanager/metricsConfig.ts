@@ -1,6 +1,15 @@
 // Central config for all available and derived metrics
 // Add new metrics here as needed
 
+// DCA Configuration - central place for all DCA settings
+export const DCA_CONFIG = {
+  DEFAULT_BUDGET_PER_DAY: 10,
+  DEFAULT_WINDOW_SIZE: 1460, // 4 years
+  DEFAULT_TEMPERATURE: 1.0,
+  DEFAULT_ZONE_SIZE: 0.25,
+  DEFAULT_MAX_BONUS: 5.0, // Maximum allocation multiplier for rare undervalued zones
+} as const;
+
 export const METRICS_LIST = [
   'close',
   'realized-price',
