@@ -80,7 +80,9 @@ export default function AIWorkbench() {
   const [metricData, setMetricData] = useState<MetricData | null>(null);
   const [loading, setLoading] = useState(true);
   const [sliderRange, setSliderRange] = useState<[number, number] | null>(null);
+  const [selectedGroupIndex, setSelectedGroupIndex] = useState(0);
   const [plotPanelKey, setPlotPanelKey] = useState(0);
+  const [hiddenTraces, setHiddenTraces] = useState<Set<string>>(new Set()); // Track hidden traces by name
   const panelRef = useRef<HTMLDivElement>(null);
 
   // AI Analyst state
@@ -206,8 +208,9 @@ export default function AIWorkbench() {
       }
     });
     
-    return traces;
-  }, [processedData, selectedMetricKeys]);
+    // Filter out hidden traces
+    return traces.filter((trace: any) => !hiddenTraces.has(trace.name));
+  }, [processedData, selectedMetricKeys, hiddenTraces]);
 
   // Memoized chart layout
   const chartLayout = useMemo(() => ({
@@ -218,44 +221,43 @@ export default function AIWorkbench() {
     font: { color: 'white' },
     xaxis: {
       color: 'white',
-      gridcolor: '#333',
+      gridcolor: '#374151',
       title: 'Date',
+      showgrid: true,
+      gridwidth: 1
     },
     yaxis: {
       title: 'Z-Score',
       type: 'linear' as const,
       side: 'left' as const,
       color: 'white',
-      gridcolor: '#333',
+      gridcolor: '#374151',
       showgrid: true,
       showline: false,
       zeroline: false,
+      gridwidth: 1,
+      tickformat: '.2f'
     },
     yaxis2: {
       title: 'Value',
       type: 'log' as const,
       side: 'right' as const,
       color: 'white',
-      gridcolor: '#333',
+      gridcolor: 'transparent',
       tickformat: '.2s',
-      showgrid: true,
+      showgrid: false,
       showline: false,
       zeroline: false,
       exponentformat: 'power',
       showexponent: 'all',
       dtick: 1,
-      overlaying: 'y',
+      overlaying: false,
+      tickmode: 'auto',
+      nticks: 5,
+      domain: [0.6, 0.9]
     },
-    margin: { l: 40, r: 40, t: 20, b: 40 },
-    legend: {
-      orientation: 'h' as const,
-      x: 0,
-      y: 1.08,
-      xanchor: 'left' as const,
-      yanchor: 'bottom' as const,
-      font: { color: 'white', size: 12 },
-      itemwidth: 10,
-    },
+    margin: { l: 80, r: 160, t: 20, b: 40 },
+    showlegend: false, // Hide the built-in legend
   }), []);
 
   // Debounced resize handler
@@ -593,6 +595,41 @@ export default function AIWorkbench() {
                 
                 return (
                   <>
+                    {/* Custom Legend Row */}
+                    <div className="flex items-center justify-start gap-4 mb-2 px-2">
+                      {chartData.map((trace: any, index: number) => {
+                        const isHidden = hiddenTraces.has(trace.name);
+                        return (
+                          <button
+                            key={index}
+                            onClick={() => {
+                              setHiddenTraces(prev => {
+                                const newHidden = new Set(prev);
+                                if (newHidden.has(trace.name)) {
+                                  newHidden.delete(trace.name);
+                                } else {
+                                  newHidden.add(trace.name);
+                                }
+                                return newHidden;
+                              });
+                            }}
+                            className={`flex items-center gap-2 px-2 py-1 rounded transition-colors ${
+                              isHidden 
+                                ? 'text-white/40 hover:text-white/60' 
+                                : 'text-white hover:text-white/80'
+                            }`}
+                          >
+                            <div 
+                              className={`w-3 h-3 rounded-full transition-opacity ${
+                                isHidden ? 'opacity-40' : 'opacity-100'
+                              }`}
+                              style={{ backgroundColor: trace.line?.color || trace.marker?.color || '#fff' }}
+                            />
+                            <span className="text-sm">{trace.name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
                     <div className="relative flex-1 min-h-0 w-full h-full">
                       <Plot
                         key={plotPanelKey}

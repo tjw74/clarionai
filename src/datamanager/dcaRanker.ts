@@ -15,15 +15,20 @@ export interface DCARankingResult {
   avgPrice: number;
   finalPrice: number;
   performance: 'outperform' | 'underperform' | 'neutral';
+  // Daily data for charting
+  dailyAllocations: number[];
+  btcBought: number[];
+  dates: string[];
+  prices: number[];
+  metricValues: number[];
+  zScores: number[];
 }
 
 export interface DCARankingConfig {
   budgetPerDay: number;
   windowSize: number;
-  temperature: number;
   zoneSize: number;
-  startDate?: string;
-  endDate?: string;
+  dailyBudgetCap: number; // Added daily budget cap
 }
 
 // Calculate profitability for a single metric + model combination
@@ -35,11 +40,13 @@ function calculateMetricModelProfitability(
   config: DCARankingConfig
 ): DCARankingResult | null {
   try {
-    const { budgetPerDay, windowSize, temperature, zoneSize } = config;
+    const { budgetPerDay, windowSize, zoneSize, dailyBudgetCap } = config;
     
     // FIX 1: Eliminate look-ahead bias - calculate z-scores only on windowed data
     const windowedMetricData = windowSize === Infinity ? metricData : metricData.slice(-windowSize);
     const windowedPriceData = windowSize === Infinity ? priceData : priceData.slice(-windowSize);
+    
+    // Use fixed window z-scores (not rolling) to ensure consistent patterns
     const zScores = calculateZScores(windowedMetricData, windowSize);
     
     // Get the model function
@@ -48,73 +55,53 @@ function calculateMetricModelProfitability(
     
     // Calculate DCA results using windowed data for consistency
     let btcBought: number[];
+    let dailyAllocations: number[];
     
-    if (modelName === 'zoneBased') {
-      // Use zone-based model with zoneSize and maxBonus parameters
-      btcBought = calculateTunedDCA(
-        windowedPriceData,
-        zScores,
-        budgetPerDay,
-        windowSize,
-        model,
-        zoneSize,
-        DCA_CONFIG.DEFAULT_MAX_BONUS
-      );
-      
-      // Debug zone information for first few metrics
-      if (metricKey === 'close' || metricKey === 'realized-price') {
-        const zones = createZones(zScores, zoneSize);
-        const zoneAllocations = calculateZoneAllocations(zones, 1.0);
-        console.log(`Zone info for ${metricKey}:`);
-        logZoneInfo(zones, zoneAllocations);
-      }
-    } else {
-      // Use legacy models with temperature parameter
-      btcBought = calculateTunedDCA(
-        windowedPriceData,
-        zScores,
-        budgetPerDay,
-        windowSize,
-        model,
-        temperature
-      );
-    }
+    // Use zone-based model with zoneSize, maxBonus, dailyBudgetCap, and metricKey parameters
+    const result = calculateTunedDCA(
+      windowedPriceData,
+      zScores,
+      budgetPerDay,
+      windowSize,
+      dcaModels.zoneBased, // Use zone-based model directly
+      dailyBudgetCap, // Pass daily budget cap first
+      zoneSize,
+      DCA_CONFIG.DEFAULT_MAX_BONUS,
+      metricKey // Pass metric key for correlation handling
+    );
+    btcBought = result.btcBought;
+    dailyAllocations = result.dailyAllocations;
+    
+
     
     // FIX 2: Calculate accurate performance metrics
     const totalBTC = btcBought.reduce((sum, btc) => sum + btc, 0);
     
-    // FIX: Use actual window size for total spent calculation
-    // The total spent should be the sum of all daily allocations, not budgetPerDay * days
-    const totalSpent = btcBought.reduce((sum, btc, i) => {
-      const price = windowedPriceData[i];
-      if (price > 0 && !isNaN(price)) {
-        return sum + (btc * price); // Convert BTC back to dollars spent
-      }
-      return sum;
-    }, 0);
+    // Use the daily allocations that were actually used to calculate btcBought
+    const totalSpent = dailyAllocations.reduce((sum, allocation) => sum + allocation, 0);
+    
+    // Validation: Ensure btcBought and dailyAllocations have the same length
+    if (btcBought.length !== dailyAllocations.length) {
+      console.error(`Length mismatch for ${metricKey} + ${modelName}:`, {
+        btcBoughtLength: btcBought.length,
+        dailyAllocationsLength: dailyAllocations.length
+      });
+      return null;
+    }
+    
+
+    
+
     
     const finalPrice = windowedPriceData[windowedPriceData.length - 1];
     const currentValue = totalBTC * finalPrice;
     const profit = currentValue - totalSpent;
     const profitPercentage = totalSpent > 0 ? (profit / totalSpent) * 100 : 0;
     const avgPrice = totalBTC > 0 ? totalSpent / totalBTC : 0;
+
+
     
-    // Debug logging for suspicious results
-    if (Math.abs(profitPercentage) > 90) {
-      console.log(`Suspicious result for ${metricKey} + ${modelName}:`, {
-        totalBTC,
-        totalSpent,
-        currentValue,
-        profit,
-        profitPercentage,
-        avgPrice,
-        finalPrice,
-        actualInvestmentDays: btcBought.filter(btc => btc > 0).length, // Use actual investment days
-        windowedPriceDataLength: windowedPriceData.length,
-        btcBoughtSample: btcBought.slice(0, 5),
-        zScoresSample: zScores.slice(0, 5)
-      });
-    }
+
     
     // Determine performance category
     let performance: 'outperform' | 'underperform' | 'neutral';
@@ -126,19 +113,31 @@ function calculateMetricModelProfitability(
       performance = 'neutral';
     }
     
-    return {
-      metricKey,
-      metricName: METRIC_DISPLAY_NAMES[metricKey] || metricKey,
-      modelName,
-      totalBTC,
-      totalSpent,
-      currentValue,
-      profit,
-      profitPercentage,
-      avgPrice,
-      finalPrice,
-      performance,
-    };
+          return {
+        metricKey,
+        metricName: METRIC_DISPLAY_NAMES[metricKey] || metricKey,
+        modelName,
+        totalBTC,
+        totalSpent,
+        currentValue,
+        profit,
+        profitPercentage,
+        avgPrice,
+        finalPrice,
+        performance,
+        // Add daily data for charting
+        dailyAllocations,
+        btcBought,
+        dates: windowedPriceData.map((_, i) => {
+          // Generate dates for the windowed period
+          const startDate = new Date();
+          startDate.setDate(startDate.getDate() - windowedPriceData.length + i);
+          return startDate.toISOString().split('T')[0];
+        }),
+        prices: windowedPriceData,
+        metricValues: windowedMetricData,
+        zScores: zScores,
+      };
   } catch (error) {
     console.error(`Error calculating profitability for ${metricKey} + ${modelName}:`, error);
     return null;
@@ -155,11 +154,11 @@ function calculateRegularDCABaseline(
   // Use windowed price data for consistency with tuned DCA
   const windowedPriceData = windowSize === Infinity ? priceData : priceData.slice(-windowSize);
   
+  // Calculate regular DCA using the same windowed data
   const btcBought = calculateRegularDCA(windowedPriceData, budgetPerDay, windowSize);
   const totalBTC = btcBought.reduce((sum, btc) => sum + btc, 0);
   
-  // FIX: Use actual window size for total spent, not counting non-zero days
-  // Regular DCA invests every day, so totalSpent = budgetPerDay * windowSize
+  // Regular DCA invests budgetPerDay every day for the entire window
   const actualWindowSize = windowedPriceData.length;
   const totalSpent = budgetPerDay * actualWindowSize;
   
@@ -169,6 +168,28 @@ function calculateRegularDCABaseline(
   const profitPercentage = totalSpent > 0 ? (profit / totalSpent) * 100 : 0;
   const avgPrice = totalBTC > 0 ? totalSpent / totalBTC : 0;
   
+  console.log('Regular DCA calculation:', {
+    windowedPriceDataLength: windowedPriceData.length,
+    totalBTC,
+    totalSpent,
+    currentValue,
+    profit,
+    profitPercentage,
+    avgPrice,
+    finalPrice,
+    firstPrice: windowedPriceData[0],
+    lastPrice: windowedPriceData[windowedPriceData.length - 1]
+  });
+  
+  // Generate daily data for regular DCA
+  const regularDailyAllocations = new Array(windowedPriceData.length).fill(budgetPerDay);
+  const regularBtcBought = windowedPriceData.map(price => budgetPerDay / price);
+  const regularDates = windowedPriceData.map((_, i) => {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - windowedPriceData.length + i);
+    return startDate.toISOString().split('T')[0];
+  });
+
   return {
     metricKey: 'regular-dca',
     metricName: 'Regular DCA',
@@ -181,6 +202,13 @@ function calculateRegularDCABaseline(
     avgPrice,
     finalPrice,
     performance: profitPercentage > 0 ? 'outperform' : 'underperform',
+    // Daily data for charting
+    dailyAllocations: regularDailyAllocations,
+    btcBought: regularBtcBought,
+    dates: regularDates,
+    prices: windowedPriceData,
+    metricValues: [], // Regular DCA doesn't use metrics
+    zScores: [], // Regular DCA doesn't use z-scores
   };
 }
 
@@ -190,6 +218,7 @@ export function generateDCARankings(
   priceData: number[],
   config: DCARankingConfig
 ): DCARankingResult[] {
+  const { budgetPerDay, windowSize, zoneSize, dailyBudgetCap } = config;
   const results: DCARankingResult[] = [];
   
   // Validate input data

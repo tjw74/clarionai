@@ -53,7 +53,7 @@ export function useDCARankings(config: DCARankingConfig): DCARankingsState {
     }
 
     calculateRankings();
-  }, [config.budgetPerDay, config.windowSize, config.temperature, config.zoneSize]);
+  }, [config.budgetPerDay, config.windowSize, config.zoneSize, config.dailyBudgetCap]); // Added dailyBudgetCap
 
   return {
     rankings,

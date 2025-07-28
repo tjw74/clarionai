@@ -1,6 +1,5 @@
-// DCA module: regular DCA, tuned DCA, and models
+// DCA module: regular DCA and tuned DCA
 
-import { softmax } from './models/softmax';
 import { zoneBasedAllocation } from './models/zoneBased';
 
 // Regular DCA calculation
@@ -16,25 +15,27 @@ export function calculateRegularDCA(
   return btcBought;
 }
 
-// Softmax model for allocation weights (legacy)
-export function softmaxModel(zScores: number[], temperature: number = 1.0): number[] {
-  return softmax(zScores, temperature);
-}
-
 // Zone-based model for allocation multipliers
-export function zoneBasedModel(zScores: number[], zoneSize: number = 0.25, maxBonus: number = 5.0): number[] {
-  return zoneBasedAllocation(zScores, zoneSize, 1.0, maxBonus);
+export function zoneBasedModel(
+  zScores: number[], 
+  zoneSize: number = 0.25, 
+  maxBonus: number = 5.0,
+  dailyBudgetCap: number = 60,
+  metricKey?: string
+): number[] {
+  return zoneBasedAllocation(zScores, zoneSize, 1.0, maxBonus, dailyBudgetCap, metricKey);
 }
 
-// Tuned DCA calculation using a model (e.g., softmax or zone-based)
+// Tuned DCA calculation
 export function calculateTunedDCA(
   priceData: number[],
   zScores: number[],
   budgetPerDay: number,
   windowSize: number,
   model: (zScores: number[], ...args: any[]) => number[],
+  dailyBudgetCap: number = 60,
   ...modelArgs: any[]
-): number[] {
+): { btcBought: number[], dailyAllocations: number[] } {
   // Only consider the last windowSize days
   const data = windowSize === Infinity ? priceData : priceData.slice(-windowSize);
   const z = windowSize === Infinity ? zScores : zScores.slice(-windowSize);
@@ -42,7 +43,7 @@ export function calculateTunedDCA(
   // Validate data alignment
   if (data.length !== z.length) {
     console.error('Data length mismatch:', { dataLength: data.length, zLength: z.length });
-    return [];
+    return { btcBought: [], dailyAllocations: [] };
   }
   
   // Get allocation multipliers from model
@@ -51,37 +52,40 @@ export function calculateTunedDCA(
   // Validate multipliers array
   if (multipliers.length !== data.length) {
     console.error('Multipliers length mismatch:', { multipliersLength: multipliers.length, dataLength: data.length });
-    return [];
+    return { btcBought: [], dailyAllocations: [] };
   }
   
   // Calculate daily allocations: baseline budget * multiplier
   const dailyAllocations = multipliers.map(m => m * budgetPerDay);
   
+  // Apply daily budget cap
+  const cappedDailyAllocations = dailyAllocations.map(allocation => 
+    Math.min(allocation, dailyBudgetCap)
+  );
+  
   // Calculate BTC bought each day
   const btcBought = data.map((price, i) => {
     if (price <= 0 || isNaN(price)) return 0;
-    return dailyAllocations[i] / price;
+    return cappedDailyAllocations[i] / price;
   });
   
-  return btcBought;
+  return { btcBought, dailyAllocations: cappedDailyAllocations };
 }
 
-// Add more models here as needed
+// Available models
 export const dcaModels = {
-  softmax: softmax,
   zoneBased: zoneBasedModel,
-  // futureModel: (zScores: number[]) => { ... },
 };
 
-// Run all models and return their results for leaderboard
+// Run all models and return their results
 export function getAllTunedDCAResults(
   priceData: number[],
   zScores: number[],
   budgetPerDay: number,
   windowSize: number,
   modelArgs: any[] = []
-): Record<string, number[]> {
-  const results: Record<string, number[]> = {};
+): Record<string, { btcBought: number[], dailyAllocations: number[] }> {
+  const results: Record<string, { btcBought: number[], dailyAllocations: number[] }> = {};
   for (const [name, model] of Object.entries(dcaModels)) {
     results[name] = calculateTunedDCA(priceData, zScores, budgetPerDay, windowSize, model, ...modelArgs);
   }

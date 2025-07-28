@@ -3,9 +3,8 @@
 export { fetchAllMetrics, fetchLatestDate, type MetricData } from './fetchMetrics';
 export { calculateDerivedMetrics } from './derivedMetrics';
 export { calculateZScores, Z_SCORE_WINDOWS } from './zScore';
-export { calculateRegularDCA, calculateTunedDCA, softmaxModel, dcaModels } from './dca';
+export { calculateRegularDCA, calculateTunedDCA, dcaModels } from './dca';
 export { METRICS_LIST, DERIVED_METRICS } from './metricsConfig';
-export { softmax } from './models/softmax';
 export { 
   generateDCARankings, 
   getTopPerformers, 

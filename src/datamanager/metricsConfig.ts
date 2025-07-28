@@ -5,9 +5,9 @@
 export const DCA_CONFIG = {
   DEFAULT_BUDGET_PER_DAY: 10,
   DEFAULT_WINDOW_SIZE: 1460, // 4 years
-  DEFAULT_TEMPERATURE: 1.0,
   DEFAULT_ZONE_SIZE: 0.25,
-  DEFAULT_MAX_BONUS: 5.0, // Maximum allocation multiplier for rare undervalued zones
+  DEFAULT_MAX_BONUS: 1.5, // Reduced from 4.0 to 1.5 for more realistic allocations
+  DEFAULT_DAILY_BUDGET_CAP: 60, // Maximum daily spend cap
 } as const;
 
 export const METRICS_LIST = [
@@ -331,3 +331,42 @@ export const DERIVED_METRICS = [
     },
   },
 ]; 
+
+// Metric correlation with Bitcoin price
+// TRUE = positive correlation (higher = more expensive)
+// FALSE = negative correlation (higher = cheaper)
+export const METRIC_CORRELATION: Record<string, boolean> = {
+  // POSITIVE CORRELATION (higher = more expensive)
+  'close': true,
+  'realized-price': true,
+  '200d-sma': true,
+  'true-market-mean': true,
+  'vaulted-price': true,
+  'marketcap': true,
+  'realized-cap': true,
+  'adjusted-spent-output-profit-ratio': true,
+  'short-term-holders-adjusted-spent-output-profit-ratio': true,
+  'long-term-holders-adjusted-spent-output-profit-ratio': true,
+  'realized-profit': true,
+  'unrealized-profit': true,
+  'short-term-holders-realized-profit': true,
+  'short-term-holders-unrealized-profit': true,
+  'long-term-holders-realized-cap': true,
+  'short-term-holders-realized-price-ratio': true,
+  'short-term-holders-supply': true,
+  'short-term-holders-utxo-count': true,
+  'short-term-holders-realized-cap': true,
+  
+  // NEGATIVE CORRELATION (higher = cheaper)
+  'negative-realized-loss': false,
+  'negative-unrealized-loss': false,
+  'short-term-holders-negative-realized-loss': false,
+  'short-term-holders-negative-unrealized-loss': false,
+  'sell-side-risk-ratio': false,
+  'liveliness': false,
+  'short-term-holders-coinblocks-destroyed': false,
+  
+  // NEUTRAL (depends on sign)
+  'net-realized-profit-and-loss': true, // Treat as positive for now
+  'net-unrealized-profit-and-loss': true, // Treat as positive for now
+}; 
