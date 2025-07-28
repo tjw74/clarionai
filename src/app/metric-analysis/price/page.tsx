@@ -1,0 +1,221 @@
+'use client';
+
+import { useState, useEffect, useMemo } from 'react';
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TrendingUp, TrendingDown, Minus, BarChart3, Activity, Target } from 'lucide-react';
+import dynamic from 'next/dynamic';
+
+// Dynamically import Plotly to avoid SSR issues
+const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
+
+export default function PriceAnalysis() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [priceData, setPriceData] = useState<{ dates: string[]; prices: number[] } | null>(null);
+
+  // Fetch price data
+  useEffect(() => {
+    async function fetchPriceData() {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await fetch('https://bitcoinresearchkit.org/api/vecs/query?index=dateindex&ids=date,close&format=json');
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch price data: ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (!Array.isArray(data) || data.length < 2) {
+          throw new Error('Invalid data format');
+        }
+
+        const [dates, prices] = data;
+        setPriceData({ dates, prices });
+        
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch price data');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchPriceData();
+  }, []);
+
+  // Memoized chart data for price chart
+  const priceChartData = useMemo(() => {
+    if (!priceData) return [];
+
+    return [
+      {
+        x: priceData.dates,
+        y: priceData.prices,
+        type: 'scatter',
+        mode: 'lines',
+        name: 'Bitcoin Price',
+        line: { 
+          color: '#33B1FF', 
+          width: 2,
+          shape: 'linear'
+        },
+        hovertemplate: 
+          '<b>Bitcoin Price</b><br>' +
+          'Date: %{x}<br>' +
+          'Price: $%{y:,.0f}<br>' +
+          '<extra></extra>',
+        hoverlabel: {
+          bgcolor: 'rgba(0, 0, 0, 0.8)',
+          bordercolor: '#33B1FF',
+          font: { color: '#FFFFFF', size: 12 }
+        }
+      }
+    ];
+  }, [priceData]);
+
+  // Memoized chart layout
+  const priceChartLayout = useMemo(() => ({
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    font: { 
+      color: '#FFFFFF',
+      family: 'Inter, system-ui, sans-serif'
+    },
+    xaxis: {
+      title: {
+        text: 'Date',
+        font: { color: '#FFFFFF', size: 14 }
+      },
+      gridcolor: '#374151',
+      zerolinecolor: '#374151',
+      showgrid: true,
+      gridwidth: 1,
+      tickfont: { color: '#FFFFFF', size: 12 },
+      titlefont: { color: '#FFFFFF', size: 14 },
+      type: 'date',
+      tickformat: '%b %Y',
+      tickangle: 0,
+      showline: true,
+      linecolor: '#374151',
+      linewidth: 1
+    },
+    yaxis: {
+      title: {
+        text: '',
+        font: { color: '#FFFFFF', size: 14 }
+      },
+      type: 'log',
+      gridcolor: '#374151',
+      zerolinecolor: '#374151',
+      showgrid: true,
+      gridwidth: 1,
+      tickfont: { color: '#FFFFFF', size: 12 },
+      titlefont: { color: '#FFFFFF', size: 14 },
+      tickformat: ',.0f',
+      tickprefix: '$',
+      showline: true,
+      linecolor: '#374151',
+      linewidth: 1,
+      // Log base 2 configuration
+      dtick: 'L2',
+      tickmode: 'auto',
+      nticks: 8
+    },
+    showlegend: true,
+    legend: {
+      x: 0,
+      y: 1.02,
+      xanchor: 'left',
+      yanchor: 'bottom',
+      orientation: 'h',
+      font: { color: '#FFFFFF', size: 14 },
+      bgcolor: 'rgba(0,0,0,0)',
+      bordercolor: 'rgba(0,0,0,0)',
+      itemwidth: 20
+    },
+    margin: { 
+      l: 80, 
+      r: 40, 
+      t: 80, 
+      b: 60 
+    },
+    hovermode: 'closest',
+    hoverdistance: 100,
+    xaxis_rangeslider_visible: false,
+    // Professional styling
+    modebar: {
+      bgcolor: 'rgba(0,0,0,0.8)',
+      color: '#FFFFFF',
+      activecolor: '#33B1FF'
+    },
+    // Responsive design
+    autosize: true,
+    // Smooth animations
+    transition: {
+      duration: 300,
+      easing: 'cubic-in-out'
+    }
+  }), []);
+
+  if (loading) {
+    return (
+      <div className="bg-black text-white min-h-screen w-full flex flex-col border-b border-white/20">
+        <header className="py-8 border-b border-white/20 w-full flex justify-center">
+          <h1 className="text-3xl font-bold">Price Analysis</h1>
+        </header>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-white">Loading price data...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-black text-white min-h-screen w-full flex flex-col border-b border-white/20">
+        <header className="py-8 border-b border-white/20 w-full flex justify-center">
+          <h1 className="text-3xl font-bold">Price Analysis</h1>
+        </header>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-red-400">Error: {error}</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-black text-white min-h-screen w-full flex flex-col border-b border-white/20">
+      <header className="py-8 border-b border-white/20 w-full flex justify-center">
+        <h1 className="text-3xl font-bold">Price Analysis</h1>
+      </header>
+
+      <div className="flex-1 p-6">
+        <ResizablePanelGroup direction="horizontal" className="min-h-[calc(100vh-200px)]">
+          {/* Price Chart Panel */}
+          <ResizablePanel defaultSize={100} minSize={30}>
+            <Card className="h-full bg-slate-950 border-slate-800">
+              <CardContent className="h-full p-0">
+                <div className="h-full w-full">
+                  <Plot
+                    data={priceChartData}
+                    layout={priceChartLayout}
+                    config={{ 
+                      responsive: true, 
+                      displayModeBar: true,
+                      modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
+                      displaylogo: false
+                    }}
+                    style={{ width: '100%', height: '100%' }}
+                    useResizeHandler={true}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      </div>
+    </div>
+  );
+} 
