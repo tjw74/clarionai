@@ -12,7 +12,13 @@ const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 export default function PriceAnalysis() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [priceData, setPriceData] = useState<{ dates: string[]; prices: number[] } | null>(null);
+  const [priceData, setPriceData] = useState<{ 
+    dates: string[]; 
+    prices: number[];
+    realizedPrice?: number[];
+    trueMarketMean?: number[];
+    vaultedPrice?: number[];
+  } | null>(null);
   const [panelSize, setPanelSize] = useState({ width: 800, height: 500 });
 
   // Resize functionality
@@ -57,19 +63,25 @@ export default function PriceAnalysis() {
         setLoading(true);
         setError(null);
 
-        const response = await fetch('https://bitcoinresearchkit.org/api/vecs/query?index=dateindex&ids=date,close&format=json');
+        const response = await fetch('https://bitcoinresearchkit.org/api/vecs/query?index=dateindex&ids=date,close,realized-price,true-market-mean,vaulted-price&format=json');
         
         if (!response.ok) {
           throw new Error(`Failed to fetch price data: ${response.status}`);
         }
 
         const data = await response.json();
-        if (!Array.isArray(data) || data.length < 2) {
+        if (!Array.isArray(data) || data.length < 5) {
           throw new Error('Invalid data format');
         }
 
-        const [dates, prices] = data;
-        setPriceData({ dates, prices });
+        const [dates, close, realizedPrice, trueMarketMean, vaultedPrice] = data;
+        setPriceData({
+          dates,
+          prices: close,
+          realizedPrice,
+          trueMarketMean,
+          vaultedPrice
+        });
         
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch price data');
@@ -105,6 +117,72 @@ export default function PriceAnalysis() {
         hoverlabel: {
           bgcolor: 'rgba(0, 0, 0, 0.8)',
           bordercolor: '#33B1FF',
+          font: { color: '#FFFFFF', size: 12 }
+        }
+      },
+      {
+        x: priceData.dates,
+        y: priceData.realizedPrice,
+        type: 'scatter',
+        mode: 'lines',
+        name: 'Realized Price',
+        line: { 
+          color: '#F59E0B', 
+          width: 1.5,
+          shape: 'linear'
+        },
+        hovertemplate: 
+          '<b>Realized Price</b><br>' +
+          'Date: %{x}<br>' +
+          'Price: $%{y:,.0f}<br>' +
+          '<extra></extra>',
+        hoverlabel: {
+          bgcolor: 'rgba(0, 0, 0, 0.8)',
+          bordercolor: '#F59E0B',
+          font: { color: '#FFFFFF', size: 12 }
+        }
+      },
+      {
+        x: priceData.dates,
+        y: priceData.trueMarketMean,
+        type: 'scatter',
+        mode: 'lines',
+        name: 'True Market Mean',
+        line: { 
+          color: '#10B981', 
+          width: 1.5,
+          shape: 'linear'
+        },
+        hovertemplate: 
+          '<b>True Market Mean</b><br>' +
+          'Date: %{x}<br>' +
+          'Price: $%{y:,.0f}<br>' +
+          '<extra></extra>',
+        hoverlabel: {
+          bgcolor: 'rgba(0, 0, 0, 0.8)',
+          bordercolor: '#10B981',
+          font: { color: '#FFFFFF', size: 12 }
+        }
+      },
+      {
+        x: priceData.dates,
+        y: priceData.vaultedPrice,
+        type: 'scatter',
+        mode: 'lines',
+        name: 'Vaulted Price',
+        line: { 
+          color: '#8B5CF6', 
+          width: 1.5,
+          shape: 'linear'
+        },
+        hovertemplate: 
+          '<b>Vaulted Price</b><br>' +
+          'Date: %{x}<br>' +
+          'Price: $%{y:,.0f}<br>' +
+          '<extra></extra>',
+        hoverlabel: {
+          bgcolor: 'rgba(0, 0, 0, 0.8)',
+          bordercolor: '#8B5CF6',
           font: { color: '#FFFFFF', size: 12 }
         }
       }
