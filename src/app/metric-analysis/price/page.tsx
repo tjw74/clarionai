@@ -199,7 +199,7 @@ export default function PriceAnalysis() {
     },
     xaxis: {
       title: {
-        text: 'Date',
+        text: '',
         font: { color: '#FFFFFF', size: 14 }
       },
       gridcolor: '#374151',
@@ -254,7 +254,7 @@ export default function PriceAnalysis() {
     },
     margin: { 
       l: 80, 
-      r: 40, 
+      r: 80, 
       t: 80, 
       b: 60 
     },
@@ -266,7 +266,9 @@ export default function PriceAnalysis() {
       bgcolor: 'rgba(0,0,0,0.8)',
       color: '#FFFFFF',
       activecolor: '#33B1FF',
-      orientation: 'h'  // 'h' for horizontal, 'v' for vertical
+      orientation: 'h',  // 'h' for horizontal, 'v' for vertical
+      x: 0,  // Position from left
+      y: 1   // Position from top
     },
     // Responsive design
     autosize: true,
@@ -329,7 +331,7 @@ export default function PriceAnalysis() {
             </div>
             
             {/* Chart Container */}
-            <div className="h-full w-full p-4">
+            <div className="h-full w-full p-4 relative">
               <Plot
                 data={priceChartData}
                 layout={{
@@ -355,6 +357,15 @@ export default function PriceAnalysis() {
                 style={{ width: '100%', height: '100%' }}
                 useResizeHandler={true}
               />
+              {/* Custom CSS to move the modebar */}
+              <style jsx>{`
+                .js-plotly-plot .plotly .modebar {
+                  top: 10px !important;
+                  left: 10px !important;
+                  right: auto !important;
+                  bottom: auto !important;
+                }
+              `}</style>
             </div>
           </div>
         </div>
