@@ -149,15 +149,18 @@ export default function PriceAnalysis() {
       gridwidth: 1,
       tickfont: { color: '#FFFFFF', size: 12 },
       titlefont: { color: '#FFFFFF', size: 14 },
-      tickformat: ',.0f',
+      tickformat: ',.0s',
       tickprefix: '$',
       showline: true,
       linecolor: '#374151',
       linewidth: 1,
+      side: 'right',
       // Log base 2 configuration
       dtick: 'L2',
       tickmode: 'auto',
-      nticks: 8
+      nticks: 8,
+      // Set range to include full price range including $120k+ peak
+      range: [Math.log10(0.01), Math.log10(200000)]
     },
     showlegend: true,
     legend: {
@@ -184,7 +187,8 @@ export default function PriceAnalysis() {
     modebar: {
       bgcolor: 'rgba(0,0,0,0.8)',
       color: '#FFFFFF',
-      activecolor: '#33B1FF'
+      activecolor: '#33B1FF',
+      orientation: 'h'  // 'h' for horizontal, 'v' for vertical
     },
     // Responsive design
     autosize: true,
@@ -258,9 +262,17 @@ export default function PriceAnalysis() {
                 }}
                 config={{ 
                   responsive: true, 
-                  displayModeBar: true,
+                  displayModeBar: 'hover',
                   modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
-                  displaylogo: false
+                  displaylogo: false,
+                  modeBarButtonsToAdd: [],
+                  toImageButtonOptions: {
+                    format: 'png',
+                    filename: 'bitcoin_price_chart',
+                    height: undefined,
+                    width: undefined,
+                    scale: 1
+                  }
                 }}
                 style={{ width: '100%', height: '100%' }}
                 useResizeHandler={true}
