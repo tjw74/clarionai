@@ -19,6 +19,7 @@ export default function SOPRAnalysis() {
     aSOPR?: number[];
   } | null>(null);
   const [panelSize, setPanelSize] = useState({ width: 800, height: 500 });
+  const [panelPosition, setPanelPosition] = useState({ x: 0, y: 0 });
   const [sliderRange, setSliderRange] = useState<[number, number] | null>(null);
 
   // Resize functionality
@@ -55,6 +56,41 @@ export default function SOPRAnalysis() {
     document.addEventListener('mousedown', handleMouseDown);
     return () => document.removeEventListener('mousedown', handleMouseDown);
   }, [panelSize.width, panelSize.height]);
+
+  // Drag functionality
+  useEffect(() => {
+    const handleMouseDown = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.cursor-move')) return;
+
+      e.preventDefault();
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const startPosX = panelPosition.x;
+      const startPosY = panelPosition.y;
+
+      const handleMouseMove = (e: MouseEvent) => {
+        const deltaX = e.clientX - startX;
+        const deltaY = e.clientY - startY;
+        
+        setPanelPosition({
+          x: startPosX + deltaX,
+          y: startPosY + deltaY
+        });
+      };
+
+      const handleMouseUp = () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => document.removeEventListener('mousedown', handleMouseDown);
+  }, [panelPosition.x, panelPosition.y]);
 
   // Fetch price data
   useEffect(() => {
@@ -144,8 +180,6 @@ export default function SOPRAnalysis() {
           shape: 'linear'
         },
         yaxis: 'y2',
-        fill: 'toself',
-        fillcolor: 'rgba(245, 158, 11, 0.1)',
         hovertemplate: 
           '<b>STH SOPR</b><br>' +
           'Date: %{x}<br>' +
@@ -308,13 +342,33 @@ export default function SOPRAnalysis() {
               width: `${panelSize.width}px`, 
               height: `${panelSize.height}px`,
               minHeight: '400px', 
-              minWidth: '600px' 
+              minWidth: '600px',
+              transform: `translate(${panelPosition.x}px, ${panelPosition.y}px)`
             }}
           >
+            {/* Drag Handle - Top Right */}
+            <div className="absolute top-0 right-0 w-4 h-4 cursor-move z-10">
+              <div className="w-full h-full flex items-start justify-end">
+                <div className="w-3 h-3 flex items-start justify-end">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="opacity-60 hover:opacity-100 transition-opacity">
+                    <circle cx="10" cy="2" r="1.5" fill="#334155"/>
+                    <circle cx="8" cy="4" r="1.5" fill="#334155"/>
+                    <circle cx="10" cy="4" r="1.5" fill="#334155"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
             {/* Resize Handle - Bottom Right */}
             <div className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
               <div className="w-full h-full flex items-end justify-end">
-                <div className="w-3 h-3 bg-slate-600 rounded-sm opacity-50 hover:opacity-100 transition-opacity"></div>
+                <div className="w-3 h-3 flex items-end justify-end">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="opacity-60 hover:opacity-100 transition-opacity">
+                    <circle cx="10" cy="10" r="1.5" fill="#334155"/>
+                    <circle cx="8" cy="8" r="1.5" fill="#334155"/>
+                    <circle cx="10" cy="8" r="1.5" fill="#334155"/>
+                  </svg>
+                </div>
               </div>
             </div>
             
