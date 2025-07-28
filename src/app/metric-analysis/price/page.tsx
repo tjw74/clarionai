@@ -202,10 +202,10 @@ export default function PriceAnalysis() {
         text: '',
         font: { color: '#FFFFFF', size: 14 }
       },
-      gridcolor: '#374151',
-      zerolinecolor: '#374151',
+      gridcolor: 'rgba(55, 65, 81, 0.3)',
+      zerolinecolor: 'rgba(55, 65, 81, 0.3)',
       showgrid: true,
-      gridwidth: 1,
+      gridwidth: 0.5,
       tickfont: { color: '#FFFFFF', size: 12 },
       titlefont: { color: '#FFFFFF', size: 14 },
       type: 'date',
@@ -221,10 +221,10 @@ export default function PriceAnalysis() {
         font: { color: '#FFFFFF', size: 14 }
       },
       type: 'log',
-      gridcolor: '#374151',
-      zerolinecolor: '#374151',
+      gridcolor: 'rgba(55, 65, 81, 0.3)',
+      zerolinecolor: 'rgba(55, 65, 81, 0.3)',
       showgrid: true,
-      gridwidth: 1,
+      gridwidth: 0.5,
       tickfont: { color: '#FFFFFF', size: 12 },
       titlefont: { color: '#FFFFFF', size: 14 },
       tickformat: ',.0s',
@@ -261,15 +261,7 @@ export default function PriceAnalysis() {
     hovermode: 'closest',
     hoverdistance: 100,
     xaxis_rangeslider_visible: false,
-    // Professional styling
-    modebar: {
-      bgcolor: 'rgba(0,0,0,0.8)',
-      color: '#FFFFFF',
-      activecolor: '#33B1FF',
-      orientation: 'h',  // 'h' for horizontal, 'v' for vertical
-      x: 0,  // Position from left
-      y: 1   // Position from top
-    },
+
     // Responsive design
     autosize: true,
     // Smooth animations
@@ -342,30 +334,13 @@ export default function PriceAnalysis() {
                 }}
                 config={{ 
                   responsive: true, 
-                  displayModeBar: 'hover',
-                  modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
-                  displaylogo: false,
-                  modeBarButtonsToAdd: [],
-                  toImageButtonOptions: {
-                    format: 'png',
-                    filename: 'bitcoin_price_chart',
-                    height: undefined,
-                    width: undefined,
-                    scale: 1
-                  }
+                  displayModeBar: false,
+                  displaylogo: false
                 }}
                 style={{ width: '100%', height: '100%' }}
                 useResizeHandler={true}
               />
-              {/* Custom CSS to move the modebar */}
-              <style jsx>{`
-                .js-plotly-plot .plotly .modebar {
-                  top: 10px !important;
-                  left: 10px !important;
-                  right: auto !important;
-                  bottom: auto !important;
-                }
-              `}</style>
+
             </div>
           </div>
         </div>
