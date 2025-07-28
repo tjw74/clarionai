@@ -368,9 +368,9 @@ export default function DCARanker() {
               </div>
 
                                   {/* Top Chart: Bitcoin Price + On-chain Metric + Z-Score */}
-                    <div className="w-full h-96 mb-6 -mx-8">
+                    <div className="w-full mb-12">
                       {/* Custom Legend for Top Chart */}
-                      <div className="flex items-center justify-start gap-4 mb-2 px-2">
+                      <div className="flex items-center justify-start gap-4 mb-4">
                         <button
                           onClick={() => {
                             setHiddenTraces(prev => {
@@ -452,75 +452,77 @@ export default function DCARanker() {
                           <span className="text-sm">{topPerformers[selectedStrategyIndex]?.metricName} (Z-Score)</span>
                         </button>
                       </div>
-                      <Plot
-                        data={topChartData}
-                        layout={{
-                          title: {
-                            text: `${topPerformers[selectedStrategyIndex]?.metricName} - Price, Metric & Z-Score Analysis`,
-                            font: { color: '#FFFFFF', size: 16 }
-                          },
-                          plot_bgcolor: 'rgba(0,0,0,0)',
-                          paper_bgcolor: 'rgba(0,0,0,0)',
-                          font: { color: '#FFFFFF' },
-                          xaxis: {
-                            title: 'Date',
-                            gridcolor: '#374151',
-                            zerolinecolor: '#374151',
-                            showgrid: true,
-                            gridwidth: 1,
-                            tickfont: { color: '#FFFFFF' },
-                            titlefont: { color: '#FFFFFF' },
-                            domain: [0, 0.94]
-                          },
-                          yaxis: {
-                            title: 'Bitcoin Price (USD)',
-                            type: 'log',
-                            gridcolor: '#374151',
-                            zerolinecolor: '#374151',
-                            side: 'left',
-                            showgrid: true,
-                            gridwidth: 1,
-                            tickfont: { color: '#FFFFFF' },
-                            titlefont: { color: '#FFFFFF' }
-                          },
-                          yaxis2: {
-                            title: `${topPerformers[selectedStrategyIndex]?.metricName} (Metric)`,
-                            type: 'log',
-                            gridcolor: 'transparent',
-                            zerolinecolor: 'transparent',
-                            side: 'right',
-                            tickfont: { color: '#FFFFFF' },
-                            titlefont: { color: '#FFFFFF' },
-                            anchor: 'free',
-                            overlaying: 'y',
-                            position: 1
-                          },
-                          yaxis3: {
-                            title: `${topPerformers[selectedStrategyIndex]?.metricName} (Z-Score)`,
-                            type: 'linear',
-                            gridcolor: 'transparent',
-                            zerolinecolor: 'transparent',
-                            side: 'right',
-                            tickfont: { color: '#FFFFFF' },
-                            titlefont: { color: '#FFFFFF' },
-                            anchor: 'free',
-                            overlaying: 'y',
-                            position: 0.95
-                          },
-                          showlegend: false,
-                          margin: { l: 80, r: 120, t: 80, b: 60 },
-                          height: 384,
-                          hovermode: 'closest'
-                        }}
-                        config={{ responsive: true, displayModeBar: false }}
-                        style={{ width: '100%', height: '100%' }}
-                      />
+                      <div className="h-[48rem] relative overflow-hidden">
+                        <Plot
+                          data={topChartData}
+                          layout={{
+                            title: {
+                              text: `${topPerformers[selectedStrategyIndex]?.metricName} - Price, Metric & Z-Score Analysis`,
+                              font: { color: '#FFFFFF', size: 16 }
+                            },
+                            plot_bgcolor: 'rgba(0,0,0,0)',
+                            paper_bgcolor: 'rgba(0,0,0,0)',
+                            font: { color: '#FFFFFF' },
+                            xaxis: {
+                              title: 'Date',
+                              gridcolor: '#374151',
+                              zerolinecolor: '#374151',
+                              showgrid: true,
+                              gridwidth: 1,
+                              tickfont: { color: '#FFFFFF' },
+                              titlefont: { color: '#FFFFFF' },
+                              domain: [0, 0.94]
+                            },
+                            yaxis: {
+                              title: 'Bitcoin Price (USD)',
+                              type: 'log',
+                              gridcolor: '#374151',
+                              zerolinecolor: '#374151',
+                              side: 'left',
+                              showgrid: true,
+                              gridwidth: 1,
+                              tickfont: { color: '#FFFFFF' },
+                              titlefont: { color: '#FFFFFF' }
+                            },
+                            yaxis2: {
+                              title: `${topPerformers[selectedStrategyIndex]?.metricName} (Metric)`,
+                              type: 'log',
+                              gridcolor: 'transparent',
+                              zerolinecolor: 'transparent',
+                              side: 'right',
+                              tickfont: { color: '#FFFFFF' },
+                              titlefont: { color: '#FFFFFF' },
+                              anchor: 'free',
+                              overlaying: 'y',
+                              position: 1
+                            },
+                            yaxis3: {
+                              title: `${topPerformers[selectedStrategyIndex]?.metricName} (Z-Score)`,
+                              type: 'linear',
+                              gridcolor: 'transparent',
+                              zerolinecolor: 'transparent',
+                              side: 'right',
+                              tickfont: { color: '#FFFFFF' },
+                              titlefont: { color: '#FFFFFF' },
+                              anchor: 'free',
+                              overlaying: 'y',
+                              position: 0.95
+                            },
+                            showlegend: false,
+                            margin: { l: 80, r: 120, t: 80, b: 60 },
+                            height: 768,
+                            hovermode: 'closest'
+                          }}
+                          config={{ responsive: true, displayModeBar: false }}
+                          style={{ width: '100%', height: '100%' }}
+                        />
+                      </div>
                     </div>
 
                     {/* Bottom Chart: Tuned DCA Purchase Amounts */}
-                    <div className="w-full h-96 mb-6 -mx-8">
+                    <div className="w-full mt-24 relative">
                       {/* Custom Legend for Bottom Chart */}
-                      <div className="flex items-center justify-start gap-4 mb-2 px-2">
+                      <div className="flex items-center justify-start gap-4 mb-4">
                         <button
                           onClick={() => {
                             setHiddenTraces(prev => {
@@ -574,44 +576,46 @@ export default function DCARanker() {
                           <span className="text-sm">$10 Baseline</span>
                         </button>
                       </div>
-                      <Plot
-                        data={bottomChartData}
-                        layout={{
-                          title: {
-                            text: `${topPerformers[selectedStrategyIndex]?.metricName} - Tuned DCA Daily Purchase Amounts`,
-                            font: { color: '#FFFFFF', size: 16 }
-                          },
-                          plot_bgcolor: 'rgba(0,0,0,0)',
-                          paper_bgcolor: 'rgba(0,0,0,0)',
-                          font: { color: '#FFFFFF' },
-                          xaxis: {
-                            title: 'Date',
-                            gridcolor: '#374151',
-                            zerolinecolor: '#374151',
-                            showgrid: true,
-                            gridwidth: 1,
-                            tickfont: { color: '#FFFFFF' },
-                            titlefont: { color: '#FFFFFF' }
-                          },
-                          yaxis: {
-                            title: 'Daily Purchase Amount (USD)',
-                            gridcolor: '#374151',
-                            zerolinecolor: '#374151',
-                            showgrid: true,
-                            gridwidth: 1,
-                            tickfont: { color: '#FFFFFF' },
-                            titlefont: { color: '#FFFFFF' },
-                            tickformat: ',.0f',
-                            tickprefix: '$'
-                          },
-                          showlegend: false,
-                          margin: { l: 80, r: 80, t: 80, b: 60 },
-                          height: 384,
-                          hovermode: 'x unified'
-                        }}
-                        config={{ responsive: true, displayModeBar: false }}
-                        style={{ width: '100%', height: '100%' }}
-                      />
+                      <div className="h-96 relative overflow-hidden">
+                        <Plot
+                          data={bottomChartData}
+                          layout={{
+                            title: {
+                              text: `${topPerformers[selectedStrategyIndex]?.metricName} - Tuned DCA Daily Purchase Amounts`,
+                              font: { color: '#FFFFFF', size: 16 }
+                            },
+                            plot_bgcolor: 'rgba(0,0,0,0)',
+                            paper_bgcolor: 'rgba(0,0,0,0)',
+                            font: { color: '#FFFFFF' },
+                            xaxis: {
+                              title: 'Date',
+                              gridcolor: '#374151',
+                              zerolinecolor: '#374151',
+                              showgrid: true,
+                              gridwidth: 1,
+                              tickfont: { color: '#FFFFFF' },
+                              titlefont: { color: '#FFFFFF' }
+                            },
+                            yaxis: {
+                              title: 'Daily Purchase Amount (USD)',
+                              gridcolor: '#374151',
+                              zerolinecolor: '#374151',
+                              showgrid: true,
+                              gridwidth: 1,
+                              tickfont: { color: '#FFFFFF' },
+                              titlefont: { color: '#FFFFFF' },
+                              tickformat: ',.0f',
+                              tickprefix: '$'
+                            },
+                            showlegend: false,
+                            margin: { l: 80, r: 80, t: 80, b: 60 },
+                            height: 384,
+                            hovermode: 'x unified'
+                          }}
+                          config={{ responsive: true, displayModeBar: false }}
+                          style={{ width: '100%', height: '100%' }}
+                        />
+                      </div>
                     </div>
             </div>
           )}
