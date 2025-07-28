@@ -1,6 +1,6 @@
 import { calculateRegularDCA, calculateTunedDCA, dcaModels } from './dca';
 import { calculateZScores } from './zScore';
-import { METRICS_LIST, METRIC_DISPLAY_NAMES, DCA_CONFIG } from './metricsConfig';
+import { ALL_METRICS_LIST, METRIC_DISPLAY_NAMES, DCA_CONFIG } from './metricsConfig';
 import { logZoneInfo, createZones, calculateZoneAllocations } from './models/zoneBased';
 
 export interface DCARankingResult {
@@ -246,7 +246,7 @@ export function generateDCARankings(
   });
   
   // Calculate rankings for each metric + model combination
-  for (const metricKey of METRICS_LIST) {
+  for (const metricKey of ALL_METRICS_LIST) {
     const metricData = metricsData[metricKey];
     if (!metricData || metricData.length === 0) {
       console.warn(`No data for metric: ${metricKey}`);

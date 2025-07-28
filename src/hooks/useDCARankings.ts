@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { 
   fetchAllMetrics, 
+  calculateDerivedMetrics,
   generateDCARankings, 
   getTopPerformers, 
   getPerformanceStats,
@@ -34,14 +35,20 @@ export function useDCARankings(config: DCARankingConfig): DCARankingsState {
         // Fetch all metrics data
         const data = await fetchAllMetrics();
         
+        // Calculate derived metrics
+        const derivedMetrics = calculateDerivedMetrics(data.metrics);
+        
+        // Combine base and derived metrics
+        const allMetrics = { ...data.metrics, ...derivedMetrics };
+        
         // Get price data for calculations
-        const priceData = data.metrics['close'] || [];
+        const priceData = allMetrics['close'] || [];
         if (priceData.length === 0) {
           throw new Error('No price data available');
         }
 
         // Generate rankings
-        const results = generateDCARankings(data.metrics, priceData, config);
+        const results = generateDCARankings(allMetrics, priceData, config);
         setRankings(results);
         
       } catch (err) {

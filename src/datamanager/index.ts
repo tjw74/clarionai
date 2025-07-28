@@ -4,7 +4,7 @@ export { fetchAllMetrics, fetchLatestDate, type MetricData } from './fetchMetric
 export { calculateDerivedMetrics } from './derivedMetrics';
 export { calculateZScores, Z_SCORE_WINDOWS } from './zScore';
 export { calculateRegularDCA, calculateTunedDCA, dcaModels } from './dca';
-export { METRICS_LIST, DERIVED_METRICS } from './metricsConfig';
+export { METRICS_LIST, ALL_METRICS_LIST, DERIVED_METRICS } from './metricsConfig';
 export { 
   generateDCARankings, 
   getTopPerformers, 

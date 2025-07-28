@@ -42,6 +42,13 @@ export const METRICS_LIST = [
   'long-term-holders-realized-cap',
 ];
 
+// Create a combined list that includes both base and derived metrics
+export const ALL_METRICS_LIST = [
+  ...METRICS_LIST,
+  'sth-market-cap',
+  'sth-mvrv-ratio',
+];
+
 // Complete mapping of metric keys to user-friendly display names
 export const METRIC_DISPLAY_NAMES: Record<string, string> = {
   // Price metrics
@@ -89,6 +96,10 @@ export const METRIC_DISPLAY_NAMES: Record<string, string> = {
   // Other metrics
   'short-term-holders-realized-price-ratio': 'STH Realized Price Ratio',
   'short-term-holders-coinblocks-destroyed': 'STH Coins Destroyed',
+  
+  // Derived metrics
+  'sth-market-cap': 'STH Market Cap',
+  'sth-mvrv-ratio': 'STH MVRV Ratio',
 };
 
 // Metric groups configuration
@@ -330,6 +341,40 @@ export const DERIVED_METRICS = [
       });
     },
   },
+  {
+    name: 'STH Market Cap',
+    formula: (metrics: Record<string, number[]>) => {
+      const sthSupply = metrics['short-term-holders-supply'];
+      const price = metrics['close'];
+      if (!sthSupply || !price || sthSupply.length !== price.length) return [];
+      return sthSupply.map((supply, i) => {
+        if (typeof supply !== 'number' || typeof price[i] !== 'number' || isNaN(supply) || isNaN(price[i])) {
+          return NaN;
+        }
+        return supply * price[i];
+      });
+    },
+  },
+  {
+    name: 'STH MVRV Ratio',
+    formula: (metrics: Record<string, number[]>) => {
+      const sthMarketCap = metrics['short-term-holders-supply']?.map((supply, i) => {
+        const price = metrics['close']?.[i];
+        if (typeof supply !== 'number' || typeof price !== 'number' || isNaN(supply) || isNaN(price)) {
+          return NaN;
+        }
+        return supply * price;
+      }) || [];
+      const sthRealizedCap = metrics['short-term-holders-realized-cap'];
+      if (!sthMarketCap || !sthRealizedCap || sthMarketCap.length !== sthRealizedCap.length) return [];
+      return sthMarketCap.map((marketCap, i) => {
+        if (typeof marketCap !== 'number' || typeof sthRealizedCap[i] !== 'number' || isNaN(marketCap) || isNaN(sthRealizedCap[i]) || sthRealizedCap[i] === 0) {
+          return NaN;
+        }
+        return marketCap / sthRealizedCap[i];
+      });
+    },
+  },
 ]; 
 
 // Metric correlation with Bitcoin price
@@ -356,6 +401,8 @@ export const METRIC_CORRELATION: Record<string, boolean> = {
   'short-term-holders-supply': true,
   'short-term-holders-utxo-count': true,
   'short-term-holders-realized-cap': true,
+  'sth-market-cap': true,
+  'sth-mvrv-ratio': true,
   
   // NEGATIVE CORRELATION (higher = cheaper)
   'negative-realized-loss': false,
