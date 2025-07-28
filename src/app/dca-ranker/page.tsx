@@ -469,7 +469,8 @@ export default function DCARanker() {
                             showgrid: true,
                             gridwidth: 1,
                             tickfont: { color: '#FFFFFF' },
-                            titlefont: { color: '#FFFFFF' }
+                            titlefont: { color: '#FFFFFF' },
+                            domain: [0, 0.94]
                           },
                           yaxis: {
                             title: 'Bitcoin Price (USD)',
@@ -488,10 +489,11 @@ export default function DCARanker() {
                             gridcolor: 'transparent',
                             zerolinecolor: 'transparent',
                             side: 'right',
-                            overlaying: 'y',
-                            position: 0.95,
                             tickfont: { color: '#FFFFFF' },
-                            titlefont: { color: '#FFFFFF' }
+                            titlefont: { color: '#FFFFFF' },
+                            anchor: 'free',
+                            overlaying: 'y',
+                            position: 1
                           },
                           yaxis3: {
                             title: `${topPerformers[selectedStrategyIndex]?.metricName} (Z-Score)`,
@@ -499,15 +501,16 @@ export default function DCARanker() {
                             gridcolor: 'transparent',
                             zerolinecolor: 'transparent',
                             side: 'right',
-                            overlaying: 'y',
-                            position: 1,
                             tickfont: { color: '#FFFFFF' },
-                            titlefont: { color: '#FFFFFF' }
+                            titlefont: { color: '#FFFFFF' },
+                            anchor: 'free',
+                            overlaying: 'y',
+                            position: 0.95
                           },
                           showlegend: false,
                           margin: { l: 80, r: 120, t: 80, b: 60 },
                           height: 384,
-                          hovermode: 'x unified'
+                          hovermode: 'closest'
                         }}
                         config={{ responsive: true, displayModeBar: false }}
                         style={{ width: '100%', height: '100%' }}
