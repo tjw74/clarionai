@@ -13,6 +13,42 @@ export default function PriceAnalysis() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [priceData, setPriceData] = useState<{ dates: string[]; prices: number[] } | null>(null);
+  const [panelSize, setPanelSize] = useState({ width: 800, height: 500 });
+
+  // Resize functionality
+  useEffect(() => {
+    const handleMouseDown = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.cursor-se-resize')) return;
+
+      e.preventDefault();
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const startWidth = panelSize.width;
+      const startHeight = panelSize.height;
+
+      const handleMouseMove = (e: MouseEvent) => {
+        const deltaX = e.clientX - startX;
+        const deltaY = e.clientY - startY;
+        
+        setPanelSize({
+          width: Math.max(600, startWidth + deltaX),
+          height: Math.max(400, startHeight + deltaY)
+        });
+      };
+
+      const handleMouseUp = () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => document.removeEventListener('mousedown', handleMouseDown);
+  }, [panelSize.width, panelSize.height]);
 
   // Fetch price data
   useEffect(() => {
@@ -191,30 +227,47 @@ export default function PriceAnalysis() {
         <h1 className="text-3xl font-bold">Price Analysis</h1>
       </header>
 
-      <div className="flex-1 p-6">
-        <ResizablePanelGroup direction="horizontal" className="min-h-[calc(100vh-200px)]">
-          {/* Price Chart Panel */}
-          <ResizablePanel defaultSize={100} minSize={30}>
-            <Card className="h-full bg-slate-950 border-slate-800">
-              <CardContent className="h-full p-0">
-                <div className="h-full w-full">
-                  <Plot
-                    data={priceChartData}
-                    layout={priceChartLayout}
-                    config={{ 
-                      responsive: true, 
-                      displayModeBar: true,
-                      modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
-                      displaylogo: false
-                    }}
-                    style={{ width: '100%', height: '100%' }}
-                    useResizeHandler={true}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </ResizablePanel>
-        </ResizablePanelGroup>
+            <div className="flex-1 p-6">
+        <div className="grid grid-cols-1 gap-6 h-full">
+          {/* Price Chart Panel - Grafana Style Resizable */}
+          <div 
+            className="relative bg-slate-950 border border-slate-800 rounded-lg" 
+            style={{ 
+              width: `${panelSize.width}px`, 
+              height: `${panelSize.height}px`,
+              minHeight: '400px', 
+              minWidth: '600px' 
+            }}
+          >
+            {/* Resize Handle - Bottom Right */}
+            <div className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
+              <div className="w-full h-full flex items-end justify-end">
+                <div className="w-3 h-3 bg-slate-600 rounded-sm opacity-50 hover:opacity-100 transition-opacity"></div>
+              </div>
+            </div>
+            
+            {/* Chart Container */}
+            <div className="h-full w-full p-4">
+              <Plot
+                data={priceChartData}
+                layout={{
+                  ...priceChartLayout,
+                  autosize: true,
+                  width: undefined,
+                  height: undefined
+                }}
+                config={{ 
+                  responsive: true, 
+                  displayModeBar: true,
+                  modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
+                  displaylogo: false
+                }}
+                style={{ width: '100%', height: '100%' }}
+                useResizeHandler={true}
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
