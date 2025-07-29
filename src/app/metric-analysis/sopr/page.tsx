@@ -552,190 +552,193 @@ export default function SOPRAnalysis() {
   return (
     <div className="bg-black text-white min-h-screen w-full flex flex-col border-b border-white/20">
       <header className="py-8 border-b border-white/20 w-full flex justify-between items-center px-6">
-        <h1 className="text-3xl font-bold">SOPR Analysis</h1>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className="bg-slate-950 border-slate-700 text-white hover:bg-slate-900">
-              <Clock className="mr-2 h-4 w-4" />
-              {formatDateRange()}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-96 bg-slate-950 border-slate-700 text-white">
-            <div className="grid gap-4">
-              <div className="space-y-2">
-                <h4 className="font-medium leading-none">Time Range</h4>
-                <p className="text-sm text-slate-400">
-                  Select a time range for all panels
-                </p>
-              </div>
-              <div className="grid gap-2">
-                <div className="grid grid-cols-3 items-center gap-4">
-                  <label htmlFor="start-date" className="text-sm font-medium">From</label>
-                  <Input
-                    id="start-date"
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="col-span-2 bg-slate-900 border-slate-600 text-white"
-                  />
+        <div className="flex-1"></div>
+        <h1 className="text-3xl font-bold">SOPR</h1>
+        <div className="flex-1 flex justify-end">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="bg-slate-950 border-slate-700 text-white hover:bg-slate-900">
+                <Clock className="mr-2 h-4 w-4" />
+                {formatDateRange()}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-96 bg-slate-950 border-slate-700 text-white">
+              <div className="grid gap-4">
+                <div className="space-y-2">
+                  <h4 className="font-medium leading-none">Time Range</h4>
+                  <p className="text-sm text-slate-400">
+                    Select a time range for all panels
+                  </p>
                 </div>
-                <div className="grid grid-cols-3 items-center gap-4">
-                  <label htmlFor="end-date" className="text-sm font-medium">To</label>
-                  <Input
-                    id="end-date"
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="col-span-2 bg-slate-900 border-slate-600 text-white"
-                  />
+                <div className="grid gap-2">
+                  <div className="grid grid-cols-3 items-center gap-4">
+                    <label htmlFor="start-date" className="text-sm font-medium">From</label>
+                    <Input
+                      id="start-date"
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="col-span-2 bg-slate-900 border-slate-600 text-white"
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 items-center gap-4">
+                    <label htmlFor="end-date" className="text-sm font-medium">To</label>
+                    <Input
+                      id="end-date"
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="col-span-2 bg-slate-900 border-slate-600 text-white"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <h4 className="font-medium leading-none">Quick Ranges</h4>
+                  <div className="grid grid-cols-3 gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 1), (priceData?.dates.length || 0) - 1])}
+                      className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
+                    >
+                      1 day
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 7), (priceData?.dates.length || 0) - 1])}
+                      className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
+                    >
+                      7 days
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 30), (priceData?.dates.length || 0) - 1])}
+                      className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
+                    >
+                      30 days
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 90), (priceData?.dates.length || 0) - 1])}
+                      className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
+                    >
+                      90 days
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 180), (priceData?.dates.length || 0) - 1])}
+                      className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
+                    >
+                      180 days
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 365), (priceData?.dates.length || 0) - 1])}
+                      className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
+                    >
+                      1yr
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 730), (priceData?.dates.length || 0) - 1])}
+                      className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
+                    >
+                      2yr
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 1095), (priceData?.dates.length || 0) - 1])}
+                      className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
+                    >
+                      3yr
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 1460), (priceData?.dates.length || 0) - 1])}
+                      className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
+                    >
+                      4yr
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 1825), (priceData?.dates.length || 0) - 1])}
+                      className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
+                    >
+                      5yr
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 2190), (priceData?.dates.length || 0) - 1])}
+                      className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
+                    >
+                      6yr
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 2555), (priceData?.dates.length || 0) - 1])}
+                      className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
+                    >
+                      7yr
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 2920), (priceData?.dates.length || 0) - 1])}
+                      className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
+                    >
+                      8yr
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 3285), (priceData?.dates.length || 0) - 1])}
+                      className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
+                    >
+                      9yr
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 3650), (priceData?.dates.length || 0) - 1])}
+                      className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
+                    >
+                      10yr
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDashboardTimeChange([0, (priceData?.dates.length || 0) - 1])}
+                      className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
+                    >
+                      All
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCustomDateChange}
+                    className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
+                  >
+                    Apply
+                  </Button>
                 </div>
               </div>
-              <div className="space-y-2">
-                <h4 className="font-medium leading-none">Quick Ranges</h4>
-                <div className="grid grid-cols-3 gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 1), (priceData?.dates.length || 0) - 1])}
-                    className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
-                  >
-                    1 day
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 7), (priceData?.dates.length || 0) - 1])}
-                    className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
-                  >
-                    7 days
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 30), (priceData?.dates.length || 0) - 1])}
-                    className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
-                  >
-                    30 days
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 90), (priceData?.dates.length || 0) - 1])}
-                    className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
-                  >
-                    90 days
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 180), (priceData?.dates.length || 0) - 1])}
-                    className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
-                  >
-                    180 days
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 365), (priceData?.dates.length || 0) - 1])}
-                    className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
-                  >
-                    1yr
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 730), (priceData?.dates.length || 0) - 1])}
-                    className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
-                  >
-                    2yr
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 1095), (priceData?.dates.length || 0) - 1])}
-                    className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
-                  >
-                    3yr
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 1460), (priceData?.dates.length || 0) - 1])}
-                    className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
-                  >
-                    4yr
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 1825), (priceData?.dates.length || 0) - 1])}
-                    className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
-                  >
-                    5yr
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 2190), (priceData?.dates.length || 0) - 1])}
-                    className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
-                  >
-                    6yr
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 2555), (priceData?.dates.length || 0) - 1])}
-                    className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
-                  >
-                    7yr
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 2920), (priceData?.dates.length || 0) - 1])}
-                    className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
-                  >
-                    8yr
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 3285), (priceData?.dates.length || 0) - 1])}
-                    className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
-                  >
-                    9yr
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 3650), (priceData?.dates.length || 0) - 1])}
-                    className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
-                  >
-                    10yr
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDashboardTimeChange([0, (priceData?.dates.length || 0) - 1])}
-                    className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
-                  >
-                    All
-                  </Button>
-                </div>
-              </div>
-              <div className="flex justify-end space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCustomDateChange}
-                  className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
-                >
-                  Apply
-                </Button>
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
+            </PopoverContent>
+          </Popover>
+        </div>
       </header>
 
       <div className="flex-1 p-6">
