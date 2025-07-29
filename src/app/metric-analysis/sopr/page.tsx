@@ -2,10 +2,13 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, Minus, BarChart3, Activity, Target } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, BarChart3, Activity, Target, Calendar, Clock } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import * as Slider from '@radix-ui/react-slider';
 import { Responsive, WidthProvider } from 'react-grid-layout';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 
@@ -23,8 +26,17 @@ export default function SOPRAnalysis() {
     prices: number[];
     aSOPR?: number[];
   } | null>(null);
+  
+  // Dashboard time range (default for all panels)
+  const [dashboardTimeRange, setDashboardTimeRange] = useState<[number, number] | null>(null);
+  
+  // Panel slider ranges (null = use dashboard, [start,end] = override)
   const [panel1SliderRange, setPanel1SliderRange] = useState<[number, number] | null>(null);
   const [panel2SliderRange, setPanel2SliderRange] = useState<[number, number] | null>(null);
+
+  // Time picker state
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
 
   // Grid layout configuration
   const [layouts, setLayouts] = useState({
@@ -75,9 +87,12 @@ export default function SOPRAnalysis() {
           aSOPR: sthSOPR
         });
         
-        // Initialize slider ranges to full dataset
-        setPanel1SliderRange([0, dates.length - 1]);
-        setPanel2SliderRange([0, dates.length - 1]);
+        // Initialize dashboard time range to full dataset
+        setDashboardTimeRange([0, dates.length - 1]);
+        
+        // Set initial date inputs
+        setStartDate(dates[0]);
+        setEndDate(dates[dates.length - 1]);
         
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch price data');
@@ -89,16 +104,56 @@ export default function SOPRAnalysis() {
     fetchPriceData();
   }, []);
 
+  // Handle dashboard time range change
+  const handleDashboardTimeChange = (newRange: [number, number]) => {
+    setDashboardTimeRange(newRange);
+    // Reset panel overrides when dashboard time changes
+    setPanel1SliderRange(null);
+    setPanel2SliderRange(null);
+    
+    // Update date inputs
+    if (priceData) {
+      setStartDate(priceData.dates[newRange[0]]);
+      setEndDate(priceData.dates[newRange[1]]);
+    }
+  };
+
+  // Handle custom date change
+  const handleCustomDateChange = () => {
+    if (!priceData || !startDate || !endDate) return;
+    
+    const startIndex = priceData.dates.indexOf(startDate);
+    const endIndex = priceData.dates.indexOf(endDate);
+    
+    if (startIndex !== -1 && endIndex !== -1) {
+      handleDashboardTimeChange([startIndex, endIndex]);
+    }
+  };
+
   // Handle layout changes
   const onLayoutChange = (currentLayout: any, allLayouts: any) => {
     setLayouts(allLayouts);
   };
 
+  // Get effective time range for each panel
+  const panel1EffectiveRange = panel1SliderRange || dashboardTimeRange;
+  const panel2EffectiveRange = panel2SliderRange || dashboardTimeRange;
+
+  // Format date range for display
+  const formatDateRange = () => {
+    if (!dashboardTimeRange || !priceData) return 'Select time range';
+    
+    const start = priceData.dates[dashboardTimeRange[0]];
+    const end = priceData.dates[dashboardTimeRange[1]];
+    
+    return `${start} to ${end}`;
+  };
+
   // Memoized chart data for panel 1
   const panel1ChartData = useMemo(() => {
-    if (!priceData || !panel1SliderRange) return [];
+    if (!priceData || !panel1EffectiveRange) return [];
 
-    const [start, end] = panel1SliderRange;
+    const [start, end] = panel1EffectiveRange;
     
     const dates = priceData.dates.slice(start, end + 1);
     const prices = priceData.prices.slice(start, end + 1);
@@ -156,13 +211,13 @@ export default function SOPRAnalysis() {
         }
       }
     ];
-  }, [priceData, panel1SliderRange]);
+  }, [priceData, panel1EffectiveRange]);
 
   // Memoized chart data for panel 2
   const panel2ChartData = useMemo(() => {
-    if (!priceData || !panel2SliderRange) return [];
+    if (!priceData || !panel2EffectiveRange) return [];
 
-    const [start, end] = panel2SliderRange;
+    const [start, end] = panel2EffectiveRange;
     
     const aSOPR = priceData.aSOPR?.slice(start, end + 1) || [];
 
@@ -207,15 +262,15 @@ export default function SOPRAnalysis() {
         }
       }
     ];
-  }, [priceData, panel2SliderRange]);
+  }, [priceData, panel2EffectiveRange]);
 
   // Memoized chart layout for panel 1
   const panel1ChartLayout = useMemo(() => {
     // Get the date range for the current slider selection
     let xaxisRange = undefined;
     
-    if (priceData && panel1SliderRange) {
-      const [start, end] = panel1SliderRange;
+    if (priceData && panel1EffectiveRange) {
+      const [start, end] = panel1EffectiveRange;
       const startDate = priceData.dates[start];
       const endDate = priceData.dates[end];
       xaxisRange = [startDate, endDate];
@@ -314,10 +369,25 @@ export default function SOPRAnalysis() {
         easing: 'cubic-in-out'
       }
     };
-  }, [priceData, panel1SliderRange]);
+  }, [priceData, panel1EffectiveRange]);
 
   // Memoized chart layout for panel 2
   const panel2ChartLayout = useMemo(() => {
+    // Calculate the actual range of SOPR values for the selected time period
+    let xaxisRange = undefined;
+    
+    if (priceData && panel2EffectiveRange) {
+      const [start, end] = panel2EffectiveRange;
+      const aSOPR = priceData.aSOPR?.slice(start, end + 1) || [];
+      
+      if (aSOPR.length > 0) {
+        const minSOPR = Math.min(...aSOPR);
+        const maxSOPR = Math.max(...aSOPR);
+        const padding = (maxSOPR - minSOPR) * 0.05; // Add 5% padding
+        xaxisRange = [minSOPR - padding, maxSOPR + padding];
+      }
+    }
+
     return {
       plot_bgcolor: 'rgba(0,0,0,0)',
       paper_bgcolor: 'rgba(0,0,0,0)',
@@ -336,7 +406,9 @@ export default function SOPRAnalysis() {
         gridwidth: 0.5,
         tickfont: { color: '#FFFFFF', size: 12 },
         titlefont: { color: '#FFFFFF', size: 14 },
-        showline: false
+        showline: false,
+        range: xaxisRange,
+        autorange: !xaxisRange // Auto-range if no specific range is set
       },
       yaxis: {
         title: {
@@ -382,7 +454,7 @@ export default function SOPRAnalysis() {
         easing: 'cubic-in-out'
       }
     };
-  }, []);
+  }, [priceData, panel2EffectiveRange]);
 
   if (loading) {
     return (
@@ -416,6 +488,195 @@ export default function SOPRAnalysis() {
         <h1 className="text-3xl font-bold">SOPR Analysis</h1>
       </header>
 
+      {/* Dashboard Time Range Selector */}
+      <div className="p-6">
+        <div className="flex items-center justify-end">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="bg-slate-950 border-slate-700 text-white hover:bg-slate-900">
+                <Clock className="mr-2 h-4 w-4" />
+                {formatDateRange()}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-96 bg-slate-950 border-slate-700 text-white">
+              <div className="grid gap-4">
+                <div className="space-y-2">
+                  <h4 className="font-medium leading-none">Time Range</h4>
+                  <p className="text-sm text-slate-400">
+                    Select a time range for all panels
+                  </p>
+                </div>
+                <div className="grid gap-2">
+                  <div className="grid grid-cols-3 items-center gap-4">
+                    <label htmlFor="start-date" className="text-sm font-medium">From</label>
+                    <Input
+                      id="start-date"
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="col-span-2 bg-slate-900 border-slate-600 text-white"
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 items-center gap-4">
+                    <label htmlFor="end-date" className="text-sm font-medium">To</label>
+                    <Input
+                      id="end-date"
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="col-span-2 bg-slate-900 border-slate-600 text-white"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <h4 className="font-medium leading-none">Quick Ranges</h4>
+                  <div className="grid grid-cols-3 gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 1), (priceData?.dates.length || 0) - 1])}
+                      className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
+                    >
+                      1 day
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 7), (priceData?.dates.length || 0) - 1])}
+                      className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
+                    >
+                      7 days
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 30), (priceData?.dates.length || 0) - 1])}
+                      className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
+                    >
+                      30 days
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 90), (priceData?.dates.length || 0) - 1])}
+                      className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
+                    >
+                      90 days
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 180), (priceData?.dates.length || 0) - 1])}
+                      className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
+                    >
+                      180 days
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 365), (priceData?.dates.length || 0) - 1])}
+                      className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
+                    >
+                      1yr
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 730), (priceData?.dates.length || 0) - 1])}
+                      className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
+                    >
+                      2yr
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 1095), (priceData?.dates.length || 0) - 1])}
+                      className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
+                    >
+                      3yr
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 1460), (priceData?.dates.length || 0) - 1])}
+                      className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
+                    >
+                      4yr
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 1825), (priceData?.dates.length || 0) - 1])}
+                      className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
+                    >
+                      5yr
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 2190), (priceData?.dates.length || 0) - 1])}
+                      className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
+                    >
+                      6yr
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 2555), (priceData?.dates.length || 0) - 1])}
+                      className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
+                    >
+                      7yr
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 2920), (priceData?.dates.length || 0) - 1])}
+                      className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
+                    >
+                      8yr
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 3285), (priceData?.dates.length || 0) - 1])}
+                      className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
+                    >
+                      9yr
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDashboardTimeChange([Math.max(0, (priceData?.dates.length || 0) - 3650), (priceData?.dates.length || 0) - 1])}
+                      className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
+                    >
+                      10yr
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDashboardTimeChange([0, (priceData?.dates.length || 0) - 1])}
+                      className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
+                    >
+                      All
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCustomDateChange}
+                    className="bg-slate-900 border-slate-600 text-white hover:bg-slate-800"
+                  >
+                    Apply
+                  </Button>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+      </div>
+
       <div className="flex-1 p-6">
         <ResponsiveGridLayout
           className="layout"
@@ -439,7 +700,7 @@ export default function SOPRAnalysis() {
           {/* Panel 1 */}
           <div key="panel1" className="bg-slate-950 border border-slate-800 rounded-lg overflow-hidden">
             <div className="h-full w-full p-4 flex flex-col">
-              <div className="flex-1">
+              <div className="flex-1" onMouseDown={(e) => e.stopPropagation()} onMouseMove={(e) => e.stopPropagation()}>
                 <Plot
                   data={panel1ChartData}
                   layout={{
@@ -459,14 +720,14 @@ export default function SOPRAnalysis() {
               </div>
               
               {/* Time range slider inside panel */}
-              {priceData && panel1SliderRange && (
+              {priceData && (
                 <div className="w-full flex justify-center items-center mt-4">
                   <Slider.Root
                     className="relative w-full max-w-2xl h-6 flex items-center"
                     min={0}
                     max={priceData.dates.length - 1}
                     step={1}
-                    value={panel1SliderRange}
+                    value={panel1EffectiveRange || [0, 0]}
                     onValueChange={([start, end]) => setPanel1SliderRange([start, end])}
                     minStepsBetweenThumbs={1}
                   >
@@ -484,7 +745,7 @@ export default function SOPRAnalysis() {
           {/* Panel 2 */}
           <div key="panel2" className="bg-slate-950 border border-slate-800 rounded-lg overflow-hidden">
             <div className="h-full w-full p-4 flex flex-col">
-              <div className="flex-1">
+              <div className="flex-1" onMouseDown={(e) => e.stopPropagation()} onMouseMove={(e) => e.stopPropagation()}>
                 <Plot
                   data={panel2ChartData}
                   layout={{
@@ -504,14 +765,14 @@ export default function SOPRAnalysis() {
               </div>
               
               {/* Time range slider inside panel */}
-              {priceData && panel2SliderRange && (
+              {priceData && (
                 <div className="w-full flex justify-center items-center mt-4">
                   <Slider.Root
                     className="relative w-full max-w-2xl h-6 flex items-center"
                     min={0}
                     max={priceData.dates.length - 1}
                     step={1}
-                    value={panel2SliderRange}
+                    value={panel2EffectiveRange || [0, 0]}
                     onValueChange={([start, end]) => setPanel2SliderRange([start, end])}
                     minStepsBetweenThumbs={1}
                   >
