@@ -350,7 +350,8 @@ export default function SOPRAnalysis() {
         gridwidth: 0.5,
         tickfont: { color: '#FFFFFF', size: 12 },
         titlefont: { color: '#FFFFFF', size: 14 },
-        showline: false
+        showline: false,
+        autorange: true
       },
       showlegend: true,
       legend: {
