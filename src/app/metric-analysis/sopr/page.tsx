@@ -87,11 +87,11 @@ export default function SOPRAnalysis() {
           aSOPR: sthSOPR
         });
         
-        // Initialize dashboard time range to full dataset
-        setDashboardTimeRange([0, dates.length - 1]);
+        // Initialize dashboard time range to last 8 years
+        setDashboardTimeRange([Math.max(0, dates.length - 2920), dates.length - 1]);
         
         // Set initial date inputs
-        setStartDate(dates[0]);
+        setStartDate(dates[Math.max(0, dates.length - 2920)]);
         setEndDate(dates[dates.length - 1]);
         
       } catch (err) {
@@ -246,6 +246,16 @@ export default function SOPRAnalysis() {
     // Find which bin contains the current value
     const currentBinIndex = Math.min(Math.floor((currentSOPR - minSOPR) / binSize), binCount - 1);
     
+    // Calculate cumulative distribution
+    const cumulative = [];
+    let sum = 0;
+    const total = bins.reduce((a, b) => a + b, 0);
+    
+    for (let i = 0; i < bins.length; i++) {
+      sum += bins[i];
+      cumulative.push((sum / total) * 100);
+    }
+    
     return [
       {
         x: binCenters,
@@ -275,6 +285,29 @@ export default function SOPRAnalysis() {
         hoverlabel: {
           bgcolor: 'rgba(0, 0, 0, 0.8)',
           bordercolor: '#F59E0B',
+          font: { color: '#FFFFFF', size: 12 }
+        }
+      },
+      // Cumulative distribution line
+      {
+        x: binCenters,
+        y: cumulative,
+        type: 'scatter',
+        mode: 'lines',
+        name: 'Cumulative %',
+        line: {
+          color: '#FFFFFF',
+          width: 1.5
+        },
+        yaxis: 'y2',
+        hovertemplate: 
+          '<b>Cumulative Distribution</b><br>' +
+          'SOPR Value: %{x:.3f}<br>' +
+          'Cumulative %: %{y:.1f}%<br>' +
+          '<extra></extra>',
+        hoverlabel: {
+          bgcolor: 'rgba(0, 0, 0, 0.8)',
+          bordercolor: '#FFFFFF',
           font: { color: '#FFFFFF', size: 12 }
         }
       }
@@ -441,6 +474,23 @@ export default function SOPRAnalysis() {
         titlefont: { color: '#FFFFFF', size: 14 },
         showline: false,
         autorange: true
+      },
+      yaxis2: {
+        title: {
+          text: 'Cumulative %',
+          font: { color: '#FFFFFF', size: 14 }
+        },
+        type: 'linear',
+        gridcolor: 'transparent',
+        zerolinecolor: 'transparent',
+        side: 'right',
+        tickfont: { color: '#FFFFFF', size: 12 },
+        titlefont: { color: '#FFFFFF', size: 14 },
+        showline: false,
+        overlaying: 'y',
+        anchor: 'free',
+        position: 1,
+        range: [0, 100]
       },
       showlegend: true,
       legend: {
