@@ -41,8 +41,8 @@ export default function SOPRAnalysis() {
   // Grid layout configuration
   const [layouts, setLayouts] = useState({
     lg: [
-      { i: 'panel1', x: 0, y: 0, w: 12, h: 8, minW: 6, minH: 4 },
-      { i: 'panel2', x: 0, y: 8, w: 12, h: 8, minW: 6, minH: 4 }
+      { i: 'panel1', x: 0, y: 0, w: 12, h: 8, minW: 4, minH: 4 },
+      { i: 'panel2', x: 0, y: 8, w: 12, h: 8, minW: 4, minH: 4 }
     ],
     md: [
       { i: 'panel1', x: 0, y: 0, w: 10, h: 6, minW: 4, minH: 3 },
