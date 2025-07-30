@@ -114,7 +114,6 @@ export default function Home() {
                 <span className={getChangeColor(priceChange90d)}>90d: {formatPercentageChange(priceChange90d)}</span>
                 <span className={getChangeColor(priceChange180d)}>180d: {formatPercentageChange(priceChange180d)}</span>
               </div>
-              <p className="text-xs text-gray-400 mt-1">Current Bitcoin Price</p>
             </CardContent>
           </Card>
 
@@ -130,7 +129,6 @@ export default function Home() {
                 <span className={getChangeColor(marketCapChange90d)}>90d: {formatPercentageChange(marketCapChange90d)}</span>
                 <span className={getChangeColor(marketCapChange180d)}>180d: {formatPercentageChange(marketCapChange180d)}</span>
               </div>
-              <p className="text-xs text-gray-400 mt-1">Total Market Value</p>
             </CardContent>
           </Card>
 
@@ -146,7 +144,6 @@ export default function Home() {
                 <span className={getChangeColor(realizedCapChange90d)}>90d: {formatPercentageChange(realizedCapChange90d)}</span>
                 <span className={getChangeColor(realizedCapChange180d)}>180d: {formatPercentageChange(realizedCapChange180d)}</span>
               </div>
-              <p className="text-xs text-gray-400 mt-1">Network Realized Value</p>
             </CardContent>
           </Card>
 
@@ -162,7 +159,6 @@ export default function Home() {
                 <span className={getChangeColor(mvrvChange90d)}>90d: {formatPercentageChange(mvrvChange90d)}</span>
                 <span className={getChangeColor(mvrvChange180d)}>180d: {formatPercentageChange(mvrvChange180d)}</span>
               </div>
-              <p className="text-xs text-gray-400 mt-1">Market to Realized Value</p>
             </CardContent>
           </Card>
         </div>
