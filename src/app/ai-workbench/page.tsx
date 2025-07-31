@@ -75,8 +75,8 @@ function downsampleData<T>(data: T[], maxPoints: number = 1000): T[] {
 
 export default function AIWorkbench() {
   console.log('METRIC_GROUPS:', METRIC_GROUPS);
-  const [selectedGroups, setSelectedGroups] = useState<string[]>(['Profit & Loss']);
-  const [selectedSubgroups, setSelectedSubgroups] = useState<string[]>(['Profit & Loss - MVRV Ratio']);
+  const [selectedGroups, setSelectedGroups] = useState<string[]>(['Price Models']);
+  const [selectedSubgroups, setSelectedSubgroups] = useState<string[]>([]);
   const [selectedIndividualMetrics, setSelectedIndividualMetrics] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
   const [metricData, setMetricData] = useState<MetricData | null>(null);
@@ -100,24 +100,7 @@ export default function AIWorkbench() {
               hidden.add(`${metric.name} Z`);
             });
           }
-        } else if (groupName === 'Profit & Loss') {
-          // For Profit & Loss, show main metrics but hide Z-scores for selected subgroups
-          if (group.subgroups) {
-            group.subgroups.forEach(subgroup => {
-              const subgroupKey = `${groupName} - ${subgroup.name}`;
-              if (subgroups.includes(subgroupKey)) {
-                subgroup.metrics.forEach(metric => {
-                  if (metric.zScore) {
-                    hidden.add(`${metric.name} Z`);
-                  }
-                });
-              }
-            });
-          } else if (group.metrics) {
-            group.metrics.forEach(metric => {
-              hidden.add(`${metric.name} Z`);
-            });
-          }
+
         } else {
           // For other groups, hide all traces by default for better UX
           if (group.metrics) {
@@ -155,21 +138,10 @@ export default function AIWorkbench() {
     selectedGroups.forEach(groupName => {
       const group = METRIC_GROUPS.find(g => g.name === groupName);
       if (group) {
-        if (group.subgroups) {
-          // Handle groups with subgroups - only include selected subgroups
-          group.subgroups.forEach(subgroup => {
-            if (selectedSubgroups.includes(`${groupName} - ${subgroup.name}`)) {
-              subgroup.metrics.forEach(metric => {
-                groupMetrics.add(metric.key);
-              });
-            }
-          });
-        } else {
-          // Handle groups with direct metrics
-          group.metrics.forEach(metric => {
-            groupMetrics.add(metric.key);
-          });
-        }
+        // Handle groups with direct metrics (no subgroups)
+        group.metrics.forEach(metric => {
+          groupMetrics.add(metric.key);
+        });
       }
     });
     
@@ -208,14 +180,7 @@ export default function AIWorkbench() {
       slicedMetrics[metricKey] = metricDataArray.slice(start, end + 1);
       
       // Find metric config to check if z-score is needed
-      const metricConfig = METRIC_GROUPS.flatMap(g => {
-        if (g.subgroups) {
-          return g.subgroups.flatMap(sg => sg.metrics);
-        } else if (g.metrics) {
-          return g.metrics;
-        }
-        return [];
-      }).find(m => m?.key === metricKey);
+      const metricConfig = METRIC_GROUPS.flatMap(g => g.metrics).find(m => m?.key === metricKey);
       if (metricConfig?.zScore) {
         zScores[metricKey] = calculateZScores(metricDataArray, 1460).slice(start, end + 1);
       }
@@ -255,32 +220,29 @@ export default function AIWorkbench() {
     // Add metric traces
     selectedMetricKeys.forEach(metricKey => {
       // Find metric config for display name and styling
-      const metricConfig = METRIC_GROUPS.flatMap(g => {
-        if (g.subgroups) {
-          return g.subgroups.flatMap(sg => sg.metrics);
-        } else if (g.metrics) {
-          return g.metrics;
-        }
-        return [];
-      }).find(m => m?.key === metricKey);
+      const metricConfig = METRIC_GROUPS.flatMap(g => g.metrics).find(m => m?.key === metricKey);
       if (!metricConfig) return;
       
       // Main metric trace
       const traceData = slicedMetrics[metricKey];
-      // More permissive validation for MVRV metrics
       const isMVRVMetric = metricKey === 'marketcap' || metricKey === 'realized-cap' || metricKey === 'mvrv-ratio';
-      const hasValidData = isMVRVMetric 
-        ? traceData && traceData.length > 0 && traceData.some(val => val !== null && val !== undefined && !isNaN(val) && val > 0)
-        : traceData && traceData.length > 0 && traceData.some(val => val !== null && val !== undefined && !isNaN(val));
+      
+      // Filter data for MVRV metrics to handle log scale properly
+      const filteredData = isMVRVMetric 
+        ? traceData.map(val => {
+            if (val === null || val === undefined || isNaN(val) || val <= 0) {
+              return null; // Use null for invalid/zero/negative values
+            }
+            return val;
+          })
+        : traceData;
+      
+      // Validate data AFTER filtering
+      const hasValidData = filteredData && filteredData.length > 0 && filteredData.some(val => val !== null && val !== undefined && !isNaN(val));
       
       if (hasValidData) {
-        // Force MVRV metrics to be visible
-        const shouldBeVisible = isMVRVMetric ? true : !hiddenTraces.has(metricConfig.name);
-        
-        // Filter data for MVRV metrics to remove zeros and negatives for log scale
-        const filteredData = isMVRVMetric 
-          ? traceData.map(val => (val !== null && val !== undefined && !isNaN(val) && val > 0) ? val : null)
-          : traceData;
+        // Check if trace should be visible based on hiddenTraces state
+        const shouldBeVisible = !hiddenTraces.has(metricConfig.name);
         
         traces.push({
           x,
@@ -674,36 +636,7 @@ export default function AIWorkbench() {
                             />
                             {group.name}
                           </CommandItem>
-                          {group.subgroups && selectedGroups.includes(group.name) && (
-                            <div className="ml-6 border-l border-white/20 pl-2">
-                              {group.subgroups.map((subgroup) => {
-                                const subgroupKey = `${group.name} - ${subgroup.name}`;
-                                const isSubgroupSelected = selectedSubgroups.includes(subgroupKey);
-                                return (
-                                  <CommandItem
-                                    key={`subgroup-${subgroup.name}`}
-                                    value={subgroupKey}
-                                    onSelect={() => {
-                                      console.log('Subgroup selected:', subgroupKey);
-                                      if (isSubgroupSelected) {
-                                        setSelectedSubgroups(prev => prev.filter(sg => sg !== subgroupKey));
-                                      } else {
-                                        setSelectedSubgroups(prev => [...prev, subgroupKey]);
-                                      }
-                                    }}
-                                  >
-                                    <Check
-                                      className={cn(
-                                        "mr-2 h-4 w-4",
-                                        isSubgroupSelected ? "opacity-100" : "opacity-0"
-                                      )}
-                                    />
-                                    <span className="text-sm">{subgroup.name}</span>
-                                  </CommandItem>
-                                );
-                              })}
-                            </div>
-                          )}
+
                         </div>
                       );
                     })}
