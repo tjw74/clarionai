@@ -196,7 +196,8 @@ export default function SOPRAnalysis() {
         line: { 
           color: '#F59E0B', 
           width: 1.5,
-          shape: 'linear'
+          shape: 'linear',
+          opacity: 0.5
         },
         yaxis: 'y2',
         hovertemplate: 

@@ -40,6 +40,7 @@ export const METRICS_LIST = [
   'negative-unrealized-loss',
   'net-unrealized-profit-and-loss',
   'long-term-holders-realized-cap',
+  'mvrv-ratio',
 ];
 
 // Create a combined list that includes both base and derived metrics
@@ -100,6 +101,7 @@ export const METRIC_DISPLAY_NAMES: Record<string, string> = {
   // Derived metrics
   'sth-market-cap': 'STH Market Cap',
   'sth-mvrv-ratio': 'STH MVRV Ratio',
+  'mvrv-ratio': 'MVRV Ratio',
 };
 
 // Metric groups configuration
@@ -112,159 +114,204 @@ export const METRIC_GROUPS = [
         key: 'close',
         name: 'Price',
         color: '#33B1FF',
-        yaxis: 'y2', // Right Y-axis (logarithmic)
-        zScore: true,
+        yaxis: 'y2',
+        zScore: false,
       },
       {
         key: 'realized-price',
         name: 'Realized Price',
         color: '#00bcd4',
         yaxis: 'y2',
-        zScore: true,
+        zScore: false,
       },
       {
         key: 'true-market-mean',
         name: 'True Market Mean',
         color: '#ff9800',
         yaxis: 'y2',
-        zScore: true,
+        zScore: false,
       },
       {
         key: 'vaulted-price',
         name: 'Vaulted Price',
         color: '#8bc34a',
         yaxis: 'y2',
-        zScore: true,
+        zScore: false,
       },
       {
         key: '200d-sma',
         name: '200d SMA',
         color: '#e91e63',
         yaxis: 'y2',
-        zScore: true,
+        zScore: false,
       },
     ],
   },
   {
     name: 'Profit & Loss',
     description: 'Comprehensive profit and loss metrics for network and holders',
-    metrics: [
-      // Network-wide SOPR metrics
+    subgroups: [
       {
-        key: 'adjusted-spent-output-profit-ratio',
-        name: 'Network SOPR',
-        color: '#2196F3',
-        yaxis: 'y',
-        zScore: true,
+        name: 'MVRV Ratio',
+        description: 'Market Value to Realized Value metrics',
+        metrics: [
+          {
+            key: 'marketcap',
+            name: 'Market Cap',
+            color: '#33B1FF',
+            yaxis: 'y',
+            zScore: false,
+          },
+          {
+            key: 'realized-cap',
+            name: 'Network Realized Cap',
+            color: '#00bcd4',
+            yaxis: 'y',
+            zScore: false,
+          },
+          {
+            key: 'mvrv-ratio',
+            name: 'MVRV Ratio',
+            color: '#ff9800',
+            yaxis: 'y2',
+            zScore: true,
+          },
+        ],
       },
       {
-        key: 'short-term-holders-adjusted-spent-output-profit-ratio',
-        name: 'STH SOPR',
-        color: '#03A9F4',
-        yaxis: 'y',
-        zScore: true,
+        name: 'SOPR Metrics',
+        description: 'Spent Output Profit Ratio metrics',
+        metrics: [
+          {
+            key: 'adjusted-spent-output-profit-ratio',
+            name: 'Network SOPR',
+            color: '#2196F3',
+            yaxis: 'y',
+            zScore: true,
+          },
+          {
+            key: 'short-term-holders-adjusted-spent-output-profit-ratio',
+            name: 'STH SOPR',
+            color: '#03A9F4',
+            yaxis: 'y',
+            zScore: true,
+          },
+          {
+            key: 'long-term-holders-adjusted-spent-output-profit-ratio',
+            name: 'LTH SOPR',
+            color: '#00BCD4',
+            yaxis: 'y',
+            zScore: true,
+          },
+        ],
       },
       {
-        key: 'long-term-holders-adjusted-spent-output-profit-ratio',
-        name: 'LTH SOPR',
-        color: '#00BCD4',
-        yaxis: 'y',
-        zScore: true,
-      },
-      // Network-wide realized P&L
-      {
-        key: 'realized-profit',
-        name: 'Network Realized Profit',
-        color: '#4CAF50',
-        yaxis: 'y2',
-        zScore: true,
-      },
-      {
-        key: 'negative-realized-loss',
-        name: 'Network Realized Loss',
-        color: '#f44336',
-        yaxis: 'y2',
-        zScore: true,
-      },
-      {
-        key: 'net-realized-profit-and-loss',
-        name: 'Net Realized P&L',
-        color: '#9C27B0',
-        yaxis: 'y2',
-        zScore: true,
-      },
-      // Network-wide unrealized P&L
-      {
-        key: 'unrealized-profit',
-        name: 'Network Unrealized Profit',
-        color: '#8BC34A',
-        yaxis: 'y2',
-        zScore: true,
+        name: 'Realized P&L',
+        description: 'Realized profit and loss metrics',
+        metrics: [
+          {
+            key: 'realized-profit',
+            name: 'Network Realized Profit',
+            color: '#4CAF50',
+            yaxis: 'y2',
+            zScore: true,
+          },
+          {
+            key: 'negative-realized-loss',
+            name: 'Network Realized Loss',
+            color: '#f44336',
+            yaxis: 'y2',
+            zScore: true,
+          },
+          {
+            key: 'net-realized-profit-and-loss',
+            name: 'Net Realized P&L',
+            color: '#9C27B0',
+            yaxis: 'y2',
+            zScore: true,
+          },
+        ],
       },
       {
-        key: 'negative-unrealized-loss',
-        name: 'Network Unrealized Loss',
-        color: '#FF5722',
-        yaxis: 'y2',
-        zScore: true,
+        name: 'Unrealized P&L',
+        description: 'Unrealized profit and loss metrics',
+        metrics: [
+          {
+            key: 'unrealized-profit',
+            name: 'Network Unrealized Profit',
+            color: '#8BC34A',
+            yaxis: 'y2',
+            zScore: true,
+          },
+          {
+            key: 'negative-unrealized-loss',
+            name: 'Network Unrealized Loss',
+            color: '#FF5722',
+            yaxis: 'y2',
+            zScore: true,
+          },
+          {
+            key: 'net-unrealized-profit-and-loss',
+            name: 'Net Unrealized P&L',
+            color: '#795548',
+            yaxis: 'y2',
+            zScore: true,
+          },
+        ],
       },
       {
-        key: 'net-unrealized-profit-and-loss',
-        name: 'Net Unrealized P&L',
-        color: '#795548',
-        yaxis: 'y2',
-        zScore: true,
-      },
-      // STH specific metrics
-      {
-        key: 'short-term-holders-realized-profit',
-        name: 'STH Realized Profit',
-        color: '#4CAF50',
-        yaxis: 'y2',
-        zScore: true,
-      },
-      {
-        key: 'short-term-holders-negative-realized-loss',
-        name: 'STH Realized Loss',
-        color: '#f44336',
-        yaxis: 'y2',
-        zScore: true,
-      },
-      {
-        key: 'short-term-holders-unrealized-profit',
-        name: 'STH Unrealized Profit',
-        color: '#8BC34A',
-        yaxis: 'y2',
-        zScore: true,
-      },
-      {
-        key: 'short-term-holders-negative-unrealized-loss',
-        name: 'STH Unrealized Loss',
-        color: '#FF5722',
-        yaxis: 'y2',
-        zScore: true,
-      },
-      // Realized cap metrics
-      {
-        key: 'realized-cap',
-        name: 'Network Realized Cap',
-        color: '#607D8B',
-        yaxis: 'y2',
-        zScore: true,
+        name: 'STH P&L',
+        description: 'Short-term holders profit and loss metrics',
+        metrics: [
+          {
+            key: 'short-term-holders-realized-profit',
+            name: 'STH Realized Profit',
+            color: '#4CAF50',
+            yaxis: 'y2',
+            zScore: true,
+          },
+          {
+            key: 'short-term-holders-negative-realized-loss',
+            name: 'STH Realized Loss',
+            color: '#f44336',
+            yaxis: 'y2',
+            zScore: true,
+          },
+          {
+            key: 'short-term-holders-unrealized-profit',
+            name: 'STH Unrealized Profit',
+            color: '#8BC34A',
+            yaxis: 'y2',
+            zScore: true,
+          },
+          {
+            key: 'short-term-holders-negative-unrealized-loss',
+            name: 'STH Unrealized Loss',
+            color: '#FF5722',
+            yaxis: 'y2',
+            zScore: true,
+          },
+        ],
       },
       {
-        key: 'short-term-holders-realized-cap',
-        name: 'STH Realized Cap',
-        color: '#795548',
-        yaxis: 'y2',
-        zScore: true,
-      },
-      {
-        key: 'long-term-holders-realized-cap',
-        name: 'LTH Realized Cap',
-        color: '#9E9E9E',
-        yaxis: 'y2',
-        zScore: true,
+        name: 'Realized Cap',
+        description: 'Realized capitalization metrics',
+        metrics: [
+          {
+            key: 'short-term-holders-realized-cap',
+            name: 'STH Realized Cap',
+            color: '#795548',
+            yaxis: 'y2',
+            zScore: true,
+          },
+          {
+            key: 'long-term-holders-realized-cap',
+            name: 'LTH Realized Cap',
+            color: '#9E9E9E',
+            yaxis: 'y2',
+            zScore: true,
+          },
+        ],
       },
     ],
   },
@@ -314,17 +361,32 @@ export const METRIC_GROUPS = [
 // Derived metrics with formulas
 export const DERIVED_METRICS = [
   {
-    name: 'MVRV Ratio',
+    name: 'mvrv-ratio',
     formula: (metrics: Record<string, number[]>) => {
       const mc = metrics['marketcap'];
       const rc = metrics['realized-cap'];
-      if (!mc || !rc || mc.length !== rc.length) return [];
-      return mc.map((v, i) => {
+      console.log('MVRV calculation inputs:', {
+        marketcap: mc ? mc.length : 0,
+        realizedCap: rc ? rc.length : 0,
+        marketcapSample: mc ? mc.slice(0, 3) : [],
+        realizedCapSample: rc ? rc.slice(0, 3) : []
+      });
+      if (!mc || !rc || mc.length !== rc.length) {
+        console.warn('MVRV calculation failed: missing or mismatched data');
+        return [];
+      }
+      const result = mc.map((v, i) => {
         if (typeof v !== 'number' || typeof rc[i] !== 'number' || isNaN(v) || isNaN(rc[i]) || rc[i] === 0) {
           return NaN;
         }
         return v / rc[i];
       });
+      console.log('MVRV calculation result:', {
+        length: result.length,
+        sample: result.slice(0, 5),
+        validCount: result.filter(r => !isNaN(r)).length
+      });
+      return result;
     },
   },
   {

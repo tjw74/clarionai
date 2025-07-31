@@ -1,6 +1,7 @@
 // This code passed review, it works, it's frozen
 
 import { METRICS_LIST } from './metricsConfig';
+import { calculateDerivedMetrics } from './derivedMetrics';
 
 const DEFAULT_API_BASE = "https://bitcoinresearchkit.org";
 
@@ -43,7 +44,21 @@ export async function fetchAllMetrics(apiBaseUrl: string = DEFAULT_API_BASE): Pr
     metrics[metric] = values;
   });
   
-  console.log(`Successfully fetched ${Object.keys(metrics).length} metrics with ${dates.length} data points`);
+  // Calculate derived metrics
+  const derivedMetrics = calculateDerivedMetrics(metrics);
+  
+  // Merge derived metrics with base metrics
+  Object.assign(metrics, derivedMetrics);
+  
+  console.log(`Successfully fetched ${Object.keys(metrics).length} metrics (including ${Object.keys(derivedMetrics).length} derived) with ${dates.length} data points`);
+  console.log('Available metrics:', Object.keys(metrics));
+  console.log('Derived metrics:', Object.keys(derivedMetrics));
+  if (derivedMetrics['mvrv-ratio']) {
+    console.log('MVRV Ratio derived metric found:', {
+      length: derivedMetrics['mvrv-ratio'].length,
+      firstFewValues: derivedMetrics['mvrv-ratio'].slice(0, 5)
+    });
+  }
   
   return {
     dates,

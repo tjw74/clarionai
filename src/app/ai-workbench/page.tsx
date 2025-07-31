@@ -74,7 +74,9 @@ function downsampleData<T>(data: T[], maxPoints: number = 1000): T[] {
 }
 
 export default function AIWorkbench() {
+  console.log('METRIC_GROUPS:', METRIC_GROUPS);
   const [selectedGroups, setSelectedGroups] = useState<string[]>(['Price Models']);
+  const [selectedSubgroups, setSelectedSubgroups] = useState<string[]>([]);
   const [selectedIndividualMetrics, setSelectedIndividualMetrics] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
   const [metricData, setMetricData] = useState<MetricData | null>(null);
@@ -83,6 +85,53 @@ export default function AIWorkbench() {
   const [selectedGroupIndex, setSelectedGroupIndex] = useState(0);
   const [plotPanelKey, setPlotPanelKey] = useState(0);
   const [hiddenTraces, setHiddenTraces] = useState<Set<string>>(new Set()); // Track hidden traces by name
+
+  // Function to get default hidden traces based on selected groups and subgroups
+  const getDefaultHiddenTraces = useCallback((groups: string[], subgroups: string[]) => {
+    const hidden = new Set<string>();
+    
+    groups.forEach(groupName => {
+      const group = METRIC_GROUPS.find(g => g.name === groupName);
+      if (group) {
+        if (groupName === 'Price Models') {
+          // For Price Models, show only the main metrics, hide Z-scores
+          if (group.metrics) {
+            group.metrics.forEach(metric => {
+              hidden.add(`${metric.name} Z`);
+            });
+          }
+        } else if (groupName === 'Profit & Loss') {
+          // For Profit & Loss, show main metrics but hide Z-scores for selected subgroups
+          if (group.subgroups) {
+            group.subgroups.forEach(subgroup => {
+              const subgroupKey = `${groupName} - ${subgroup.name}`;
+              if (subgroups.includes(subgroupKey)) {
+                subgroup.metrics.forEach(metric => {
+                  if (metric.zScore) {
+                    hidden.add(`${metric.name} Z`);
+                  }
+                });
+              }
+            });
+          } else if (group.metrics) {
+            group.metrics.forEach(metric => {
+              hidden.add(`${metric.name} Z`);
+            });
+          }
+        } else {
+          // For other groups, hide all traces by default for better UX
+          if (group.metrics) {
+            group.metrics.forEach(metric => {
+              hidden.add(metric.name);
+              hidden.add(`${metric.name} Z`);
+            });
+          }
+        }
+      }
+    });
+    
+    return hidden;
+  }, []);
   const panelRef = useRef<HTMLDivElement>(null);
 
   // AI Analyst state
@@ -97,7 +146,7 @@ export default function AIWorkbench() {
   }>>([]);
   const [userMessage, setUserMessage] = useState('');
 
-  // Helper function to get all selected metric keys (groups + individual, deduplicated)
+  // Helper function to get all selected metric keys (groups + subgroups + individual, deduplicated)
   const getSelectedMetricKeys = useCallback(() => {
     const groupMetrics = new Set<string>();
     const individualMetrics = new Set(selectedIndividualMetrics);
@@ -106,18 +155,40 @@ export default function AIWorkbench() {
     selectedGroups.forEach(groupName => {
       const group = METRIC_GROUPS.find(g => g.name === groupName);
       if (group) {
-        group.metrics.forEach(metric => {
-          groupMetrics.add(metric.key);
-        });
+        if (group.subgroups) {
+          // Handle groups with subgroups - only include selected subgroups
+          group.subgroups.forEach(subgroup => {
+            if (selectedSubgroups.includes(`${groupName} - ${subgroup.name}`)) {
+              subgroup.metrics.forEach(metric => {
+                groupMetrics.add(metric.key);
+              });
+            }
+          });
+        } else {
+          // Handle groups with direct metrics
+          group.metrics.forEach(metric => {
+            groupMetrics.add(metric.key);
+          });
+        }
       }
     });
     
     // Combine and deduplicate
     return [...groupMetrics, ...individualMetrics];
-  }, [selectedGroups, selectedIndividualMetrics]);
+  }, [selectedGroups, selectedSubgroups, selectedIndividualMetrics]);
 
   // Get currently selected metrics for display
   const selectedMetricKeys = getSelectedMetricKeys();
+  console.log('Selected metric keys:', selectedMetricKeys);
+
+  // Update hidden traces when selected groups or subgroups change
+  useEffect(() => {
+    console.log('Selected groups changed:', selectedGroups);
+    console.log('Selected subgroups changed:', selectedSubgroups);
+    const defaultHidden = getDefaultHiddenTraces(selectedGroups, selectedSubgroups);
+    console.log('Default hidden traces:', Array.from(defaultHidden));
+    setHiddenTraces(defaultHidden);
+  }, [selectedGroups, selectedSubgroups, getDefaultHiddenTraces]);
 
   // Memoized data processing
   const processedData = useMemo(() => {
@@ -137,10 +208,27 @@ export default function AIWorkbench() {
     selectedMetricKeys.forEach(metricKey => {
       // Get the metric data
       const metricDataArray = metricData.metrics[metricKey] || [];
+      if (metricKey === 'mvrv-ratio') {
+        console.log('MVRV Ratio data:', {
+          key: metricKey,
+          dataLength: metricDataArray.length,
+          firstFewValues: metricDataArray.slice(0, 5),
+          hasData: metricDataArray.length > 0,
+          validValues: metricDataArray.filter(val => val !== null && val !== undefined && !isNaN(val)).length,
+          sampleValidValues: metricDataArray.filter(val => val !== null && val !== undefined && !isNaN(val)).slice(0, 5)
+        });
+      }
       slicedMetrics[metricKey] = metricDataArray.slice(start, end + 1);
       
       // Find metric config to check if z-score is needed
-      const metricConfig = METRIC_GROUPS.flatMap(g => g.metrics).find(m => m.key === metricKey);
+      const metricConfig = METRIC_GROUPS.flatMap(g => {
+        if (g.subgroups) {
+          return g.subgroups.flatMap(sg => sg.metrics);
+        } else if (g.metrics) {
+          return g.metrics;
+        }
+        return [];
+      }).find(m => m?.key === metricKey);
       if (metricConfig?.zScore) {
         zScores[metricKey] = calculateZScores(metricDataArray, 1460).slice(start, end + 1);
       }
@@ -180,19 +268,32 @@ export default function AIWorkbench() {
     // Add metric traces
     selectedMetricKeys.forEach(metricKey => {
       // Find metric config for display name and styling
-      const metricConfig = METRIC_GROUPS.flatMap(g => g.metrics).find(m => m.key === metricKey);
+      const metricConfig = METRIC_GROUPS.flatMap(g => {
+        if (g.subgroups) {
+          return g.subgroups.flatMap(sg => sg.metrics);
+        } else if (g.metrics) {
+          return g.metrics;
+        }
+        return [];
+      }).find(m => m?.key === metricKey);
       if (!metricConfig) return;
       
       // Main metric trace
-      traces.push({
-        x,
-        y: slicedMetrics[metricKey],
-        name: metricConfig.name,
-        type: 'scatter' as const,
-        mode: 'lines' as const,
-        line: { color: metricConfig.color, width: 1 },
-        yaxis: metricConfig.yaxis,
-      });
+      const traceData = slicedMetrics[metricKey];
+      if (traceData && traceData.length > 0 && traceData.some(val => val !== null && val !== undefined && !isNaN(val))) {
+        traces.push({
+          x,
+          y: traceData,
+          name: metricConfig.name,
+          type: 'scatter' as const,
+          mode: 'lines' as const,
+          line: { color: metricConfig.color, width: 1 },
+          yaxis: metricConfig.yaxis,
+          visible: hiddenTraces.has(metricConfig.name) ? 'legendonly' : true,
+        });
+      } else {
+        console.warn(`No valid data for metric: ${metricKey} (${metricConfig.name})`);
+      }
       
       // Z-score trace if enabled
       if (metricConfig.zScore && zScores[metricKey]) {
@@ -204,12 +305,12 @@ export default function AIWorkbench() {
           mode: 'lines' as const,
           line: { color: metricConfig.color, width: 1 },
           yaxis: 'y', // Z-scores always on left Y-axis
+          visible: hiddenTraces.has(`${metricConfig.name} Z`) ? 'legendonly' : true,
         });
       }
     });
     
-    // Filter out hidden traces
-    return traces.filter((trace: any) => !hiddenTraces.has(trace.name));
+    return traces;
   }, [processedData, selectedMetricKeys, hiddenTraces]);
 
   // Memoized chart layout
@@ -227,7 +328,7 @@ export default function AIWorkbench() {
       gridwidth: 1
     },
     yaxis: {
-      title: 'Z-Score',
+      title: 'Z-Score / Ratio',
       type: 'linear' as const,
       side: 'left' as const,
       color: 'white',
@@ -243,9 +344,9 @@ export default function AIWorkbench() {
       type: 'log' as const,
       side: 'right' as const,
       color: 'white',
-      gridcolor: 'transparent',
+      gridcolor: '#374151',
       tickformat: '.2s',
-      showgrid: false,
+      showgrid: true,
       showline: false,
       zeroline: false,
       exponentformat: 'power',
@@ -253,9 +354,9 @@ export default function AIWorkbench() {
       dtick: 1,
       overlaying: false,
       tickmode: 'auto',
-      nticks: 5,
-      domain: [0.6, 0.9]
+      nticks: 5
     },
+
     margin: { l: 80, r: 160, t: 20, b: 40 },
     showlegend: false, // Hide the built-in legend
   }), []);
@@ -527,28 +628,65 @@ export default function AIWorkbench() {
                   
                   {/* Groups Section */}
                   <CommandGroup heading="Groups">
-                    {METRIC_GROUPS.map((group) => (
-                      <CommandItem
-                        key={`group-${group.name}`}
-                        value={group.name}
-                        onSelect={() => {
-                          const isSelected = selectedGroups.includes(group.name);
-                          if (isSelected) {
-                            setSelectedGroups(prev => prev.filter(g => g !== group.name));
-                          } else {
-                            setSelectedGroups(prev => [...prev, group.name]);
-                          }
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            selectedGroups.includes(group.name) ? "opacity-100" : "opacity-0"
+                    {METRIC_GROUPS.map((group) => {
+                      console.log('Rendering group:', group.name);
+                      return (
+                        <div key={`group-${group.name}`}>
+                          <CommandItem
+                            value={group.name}
+                            onSelect={() => {
+                              console.log('Group selected:', group.name);
+                              const isSelected = selectedGroups.includes(group.name);
+                              if (isSelected) {
+                                setSelectedGroups(prev => prev.filter(g => g !== group.name));
+                                // Also remove all subgroups when group is deselected
+                                setSelectedSubgroups(prev => prev.filter(sg => !sg.startsWith(`${group.name} -`)));
+                              } else {
+                                setSelectedGroups(prev => [...prev, group.name]);
+                              }
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                selectedGroups.includes(group.name) ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {group.name}
+                          </CommandItem>
+                          {group.subgroups && selectedGroups.includes(group.name) && (
+                            <div className="ml-6 border-l border-white/20 pl-2">
+                              {group.subgroups.map((subgroup) => {
+                                const subgroupKey = `${group.name} - ${subgroup.name}`;
+                                const isSubgroupSelected = selectedSubgroups.includes(subgroupKey);
+                                return (
+                                  <CommandItem
+                                    key={`subgroup-${subgroup.name}`}
+                                    value={subgroupKey}
+                                    onSelect={() => {
+                                      console.log('Subgroup selected:', subgroupKey);
+                                      if (isSubgroupSelected) {
+                                        setSelectedSubgroups(prev => prev.filter(sg => sg !== subgroupKey));
+                                      } else {
+                                        setSelectedSubgroups(prev => [...prev, subgroupKey]);
+                                      }
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        isSubgroupSelected ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    <span className="text-sm">{subgroup.name}</span>
+                                  </CommandItem>
+                                );
+                              })}
+                            </div>
                           )}
-                        />
-                        {group.name}
-                      </CommandItem>
-                    ))}
+                        </div>
+                      );
+                    })}
                   </CommandGroup>
                   
                   {/* Individual Metrics Section */}
@@ -666,7 +804,7 @@ export default function AIWorkbench() {
               })()}
             </div>
           </ResizablePanel>
-          <ResizableHandle withHandle className="border border-white/20 border-[1px]" />
+          <ResizableHandle className="border border-white/20 border-[1px]" />
           {/* Right side (vertical split) */}
           <ResizablePanel defaultSize={50} minSize={20} className="min-w-0">
             <ResizablePanelGroup direction="vertical" className="h-full min-h-0">
@@ -800,7 +938,7 @@ export default function AIWorkbench() {
                   </div>
                 </div>
               </ResizablePanel>
-              <ResizableHandle withHandle className="border border-white/20 border-[1px]" />
+              <ResizableHandle className="border border-white/20 border-[1px]" />
               {/* Bottom Right */}
               <ResizablePanel defaultSize={30} minSize={20} className="min-h-0">
                 <div className="flex flex-col h-full w-full items-center justify-center p-2 bg-black">
