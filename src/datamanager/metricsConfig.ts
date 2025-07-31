@@ -161,6 +161,7 @@ export const METRIC_GROUPS = [
             color: '#33B1FF',
             yaxis: 'y',
             zScore: false,
+            type: 'log',
           },
           {
             key: 'realized-cap',
@@ -168,6 +169,7 @@ export const METRIC_GROUPS = [
             color: '#00bcd4',
             yaxis: 'y',
             zScore: false,
+            type: 'log',
           },
           {
             key: 'mvrv-ratio',
@@ -175,6 +177,7 @@ export const METRIC_GROUPS = [
             color: '#ff9800',
             yaxis: 'y2',
             zScore: true,
+            type: 'linear',
           },
         ],
       },
