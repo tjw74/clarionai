@@ -4,7 +4,7 @@ import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from "@/componen
 import dynamic from 'next/dynamic';
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 import { fetchAllMetrics, type MetricData, calculateZScores } from '../../datamanager';
-import { METRIC_GROUPS, METRICS_LIST, METRIC_DISPLAY_NAMES } from '../../datamanager/metricsConfig';
+import { METRIC_GROUPS, METRICS_LIST, METRIC_DISPLAY_NAMES, METRIC_SCALE_TYPES } from '../../datamanager/metricsConfig';
 import * as Slider from '@radix-ui/react-slider';
 import { Check, ChevronsUpDown, Send, Bot, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -152,6 +152,37 @@ export default function AIWorkbench() {
   const selectedMetricKeys = getSelectedMetricKeys();
   console.log('Selected metric keys:', selectedMetricKeys);
 
+  // Smart axis assignment logic
+  const getAxisAssignment = useCallback((metrics: string[]) => {
+    const leftAxisMetrics: string[] = [];
+    const rightAxisMetrics: string[] = [];
+    
+    metrics.forEach(metric => {
+      if (METRIC_SCALE_TYPES.USD_LARGE.includes(metric as any)) {
+        leftAxisMetrics.push(metric); // Log scale for large USD values
+      } else if (METRIC_SCALE_TYPES.USD_PRICE.includes(metric as any)) {
+        leftAxisMetrics.push(metric); // Log scale for price values
+      } else if (METRIC_SCALE_TYPES.RATIO.includes(metric as any)) {
+        rightAxisMetrics.push(metric); // Linear scale for ratios
+      } else if (metric.endsWith('_z')) {
+        rightAxisMetrics.push(metric); // Linear scale for z-scores
+      } else if (METRIC_SCALE_TYPES.PERCENTAGE.includes(metric as any)) {
+        rightAxisMetrics.push(metric); // Linear scale for percentages
+      } else if (METRIC_SCALE_TYPES.COUNT.includes(metric as any)) {
+        leftAxisMetrics.push(metric); // Log scale for large counts
+      } else {
+        // Default: put on left axis
+        leftAxisMetrics.push(metric);
+      }
+    });
+    
+    return { leftAxisMetrics, rightAxisMetrics };
+  }, []);
+
+  const { leftAxisMetrics, rightAxisMetrics } = getAxisAssignment(selectedMetricKeys);
+  const hasLeftAxis = leftAxisMetrics.length > 0;
+  const hasRightAxis = rightAxisMetrics.length > 0;
+
   // Update hidden traces when selected groups or individual metrics change
   useEffect(() => {
     const defaultHidden = getDefaultHiddenTraces(selectedGroups, selectedSubgroups);
@@ -265,6 +296,9 @@ export default function AIWorkbench() {
       // Check if trace should be visible based on hiddenTraces state
       const shouldBeVisible = !hiddenTraces.has(metricConfig.name);
       
+      // Determine which axis to use for this metric
+      const isRightAxisMetric = rightAxisMetrics.includes(metricKey);
+      
       traces.push({
         x,
         y: traceData,
@@ -272,6 +306,7 @@ export default function AIWorkbench() {
         type: 'scatter' as const,
         mode: 'lines' as const,
         line: { color: metricConfig.color, width: 1 },
+        yaxis: isRightAxisMetric ? 'y2' : 'y',
         visible: shouldBeVisible ? true : 'legendonly',
         connectgaps: false,
       });
@@ -285,6 +320,7 @@ export default function AIWorkbench() {
           type: 'scatter' as const,
           mode: 'lines' as const,
           line: { color: metricConfig.color, width: 1 },
+          yaxis: 'y2', // Z-scores always go on right axis (linear scale)
           visible: hiddenTraces.has(`${metricConfig.name} Z`) ? 'legendonly' : true,
         });
       }
@@ -293,9 +329,9 @@ export default function AIWorkbench() {
     return traces;
   }, [processedData, selectedMetricKeys, hiddenTraces]);
 
-  // Simple chart layout - just show the data
+  // Dynamic dual-axis chart layout
   const chartLayout = useMemo(() => {
-    return {
+    const baseLayout: any = {
       autosize: true,
       paper_bgcolor: 'black',
       plot_bgcolor: 'black',
@@ -307,9 +343,16 @@ export default function AIWorkbench() {
         showgrid: true,
         gridwidth: 1
       },
-      yaxis: {
-        title: 'Value',
+      margin: { l: 80, r: 80, t: 20, b: 40 },
+      showlegend: false,
+    };
+
+    // Add left axis if needed
+    if (hasLeftAxis) {
+      baseLayout.yaxis = {
+        title: 'USD Value (log)',
         type: 'log' as const,
+        side: 'left' as const,
         color: 'white',
         gridcolor: '#374151',
         showgrid: true,
@@ -320,11 +363,31 @@ export default function AIWorkbench() {
         tickmode: 'auto',
         nticks: 8,
         tickfont: { color: 'white', size: 10 }
-      },
-      margin: { l: 80, r: 80, t: 20, b: 40 },
-      showlegend: false,
-    };
-  }, []);
+      };
+    }
+
+    // Add right axis if needed
+    if (hasRightAxis) {
+      baseLayout.yaxis2 = {
+        title: 'Ratio / Z-Score (linear)',
+        type: 'linear' as const,
+        side: 'right' as const,
+        color: 'white',
+        gridcolor: '#374151',
+        showgrid: true,
+        showline: true,
+        zeroline: false,
+        tickformat: '.2f',
+        showticklabels: true,
+        tickmode: 'auto',
+        nticks: 8,
+        tickfont: { color: 'white', size: 10 },
+        overlaying: hasLeftAxis ? 'y' : undefined,
+      };
+    }
+
+    return baseLayout;
+  }, [hasLeftAxis, hasRightAxis]);
 
   // Debounced resize handler
   const debouncedResizeHandler = useCallback(

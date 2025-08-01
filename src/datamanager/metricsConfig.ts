@@ -50,6 +50,16 @@ export const ALL_METRICS_LIST = [
   'sth-mvrv-ratio',
 ];
 
+// Metric scale types for axis assignment
+export const METRIC_SCALE_TYPES = {
+  USD_LARGE: ['marketcap', 'realized-cap'], // Billions/Trillions - Log scale
+  USD_PRICE: ['close', 'realized-price', '200d-sma', 'true-market-mean', 'vaulted-price'], // Thousands - Log scale
+  RATIO: ['mvrv-ratio', 'adjusted-spent-output-profit-ratio', 'sell-side-risk-ratio'], // 0-10 range - Linear scale
+  Z_SCORE: ['*_z'], // -3 to +3 range - Linear scale
+  PERCENTAGE: ['liveliness'], // 0-100% - Linear scale
+  COUNT: ['short-term-holders-utxo-count'], // Large integers - Log scale
+} as const;
+
 // Complete mapping of metric keys to user-friendly display names
 export const METRIC_DISPLAY_NAMES: Record<string, string> = {
   // Price metrics
