@@ -82,12 +82,12 @@ export default function AIWorkbench() {
   const [metricData, setMetricData] = useState<MetricData | null>(null);
   const [loading, setLoading] = useState(true);
   const [sliderRange, setSliderRange] = useState<[number, number] | null>(null);
-  const [selectedGroupIndex, setSelectedGroupIndex] = useState(0);
+  // const [selectedGroupIndex, setSelectedGroupIndex] = useState(0);
   const [plotPanelKey, setPlotPanelKey] = useState(0);
   const [hiddenTraces, setHiddenTraces] = useState<Set<string>>(new Set()); // Track hidden traces by name
 
   // Function to get default hidden traces based on selected groups and subgroups
-  const getDefaultHiddenTraces = useCallback((groups: string[], subgroups: string[]) => {
+  const getDefaultHiddenTraces = useCallback((groups: string[]) => {
     const hidden = new Set<string>();
     
     groups.forEach(groupName => {
@@ -176,17 +176,17 @@ export default function AIWorkbench() {
         leftAxisMetrics.push(metric); // Large USD values on log scale
       } else if (metric === 'mvrv-ratio') {
         rightAxisMetrics.push(metric); // Ratio on linear scale
-      } else if (METRIC_SCALE_TYPES.USD_LARGE.includes(metric as any)) {
+      } else if (METRIC_SCALE_TYPES.USD_LARGE.includes(metric as string)) {
         leftAxisMetrics.push(metric); // Log scale for large USD values
-      } else if (METRIC_SCALE_TYPES.USD_PRICE.includes(metric as any)) {
+      } else if (METRIC_SCALE_TYPES.USD_PRICE.includes(metric as string)) {
         leftAxisMetrics.push(metric); // Log scale for price values
-      } else if (METRIC_SCALE_TYPES.RATIO.includes(metric as any)) {
+      } else if (METRIC_SCALE_TYPES.RATIO.includes(metric as string)) {
         rightAxisMetrics.push(metric); // Linear scale for ratios
       } else if (metric.endsWith('_z')) {
         rightAxisMetrics.push(metric); // Linear scale for z-scores
-      } else if (METRIC_SCALE_TYPES.PERCENTAGE.includes(metric as any)) {
+      } else if (METRIC_SCALE_TYPES.PERCENTAGE.includes(metric as string)) {
         rightAxisMetrics.push(metric); // Linear scale for percentages
-      } else if (METRIC_SCALE_TYPES.COUNT.includes(metric as any)) {
+      } else if (METRIC_SCALE_TYPES.COUNT.includes(metric as string)) {
         leftAxisMetrics.push(metric); // Log scale for large counts
       } else {
         // Default: put on left axis
@@ -203,7 +203,7 @@ export default function AIWorkbench() {
 
   // Update hidden traces when selected groups or individual metrics change
   useEffect(() => {
-    const defaultHidden = getDefaultHiddenTraces(selectedGroups, selectedSubgroups);
+    const defaultHidden = getDefaultHiddenTraces(selectedGroups);
     
     // Also hide Z-scores for individually selected metrics by default
     selectedIndividualMetrics.forEach(metricKey => {
@@ -214,7 +214,7 @@ export default function AIWorkbench() {
     });
     
     setHiddenTraces(defaultHidden);
-  }, [selectedGroups, selectedSubgroups, selectedIndividualMetrics, getDefaultHiddenTraces]);
+  }, [selectedGroups, selectedIndividualMetrics, getDefaultHiddenTraces]);
 
   // Memoized data processing
   const processedData = useMemo(() => {
