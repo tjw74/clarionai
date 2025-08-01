@@ -76,7 +76,7 @@ function downsampleData<T>(data: T[], maxPoints: number = 1000): T[] {
 export default function AIWorkbench() {
   console.log('METRIC_GROUPS:', METRIC_GROUPS);
   const [selectedGroups, setSelectedGroups] = useState<string[]>(['MVRV Ratio']);
-  const [selectedSubgroups, setSelectedSubgroups] = useState<string[]>([]);
+  // const [selectedSubgroups, setSelectedSubgroups] = useState<string[]>([]);
   const [selectedIndividualMetrics, setSelectedIndividualMetrics] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
   const [metricData, setMetricData] = useState<MetricData | null>(null);
@@ -176,17 +176,22 @@ export default function AIWorkbench() {
         leftAxisMetrics.push(metric); // Large USD values on log scale
       } else if (metric === 'mvrv-ratio') {
         rightAxisMetrics.push(metric); // Ratio on linear scale
-      } else if (METRIC_SCALE_TYPES.USD_LARGE.includes(metric as string)) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } else if (METRIC_SCALE_TYPES.USD_LARGE.includes(metric as any)) {
         leftAxisMetrics.push(metric); // Log scale for large USD values
-      } else if (METRIC_SCALE_TYPES.USD_PRICE.includes(metric as string)) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } else if (METRIC_SCALE_TYPES.USD_PRICE.includes(metric as any)) {
         leftAxisMetrics.push(metric); // Log scale for price values
-      } else if (METRIC_SCALE_TYPES.RATIO.includes(metric as string)) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } else if (METRIC_SCALE_TYPES.RATIO.includes(metric as any)) {
         rightAxisMetrics.push(metric); // Linear scale for ratios
       } else if (metric.endsWith('_z')) {
         rightAxisMetrics.push(metric); // Linear scale for z-scores
-      } else if (METRIC_SCALE_TYPES.PERCENTAGE.includes(metric as string)) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } else if (METRIC_SCALE_TYPES.PERCENTAGE.includes(metric as any)) {
         rightAxisMetrics.push(metric); // Linear scale for percentages
-      } else if (METRIC_SCALE_TYPES.COUNT.includes(metric as string)) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } else if (METRIC_SCALE_TYPES.COUNT.includes(metric as any)) {
         leftAxisMetrics.push(metric); // Log scale for large counts
       } else {
         // Default: put on left axis
@@ -438,12 +443,12 @@ export default function AIWorkbench() {
     }
 
     return baseLayout;
-  }, [hasLeftAxis, hasRightAxis]);
+  }, [hasLeftAxis, hasRightAxis, rightAxisMetrics]);
 
   // Debounced resize handler
   const debouncedResizeHandler = useCallback(
     debounce(() => setPlotPanelKey(k => k + 1), 100),
-    []
+    [setPlotPanelKey]
   );
 
   useEffect(() => {
@@ -467,7 +472,7 @@ export default function AIWorkbench() {
       }
       setSliderRange([first2013Idx, metricData.dates.length - 1]);
     }
-  }, [metricData]);
+  }, [metricData, sliderRange]);
 
   useEffect(() => {
     if (!panelRef.current) return;
@@ -719,7 +724,7 @@ export default function AIWorkbench() {
                               if (isSelected) {
                                 setSelectedGroups(prev => prev.filter(g => g !== group.name));
                                 // Also remove all subgroups when group is deselected
-                                setSelectedSubgroups(prev => prev.filter(sg => !sg.startsWith(`${group.name} -`)));
+                                // setSelectedSubgroups(prev => prev.filter(sg => !sg.startsWith(`${group.name} -`)));
                               } else {
                                 setSelectedGroups(prev => [...prev, group.name]);
                               }
