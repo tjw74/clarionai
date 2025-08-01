@@ -75,7 +75,7 @@ function downsampleData<T>(data: T[], maxPoints: number = 1000): T[] {
 
 export default function AIWorkbench() {
   console.log('METRIC_GROUPS:', METRIC_GROUPS);
-  const [selectedGroups, setSelectedGroups] = useState<string[]>(['Price Models']);
+  const [selectedGroups, setSelectedGroups] = useState<string[]>(['MVRV Ratio']);
   const [selectedSubgroups, setSelectedSubgroups] = useState<string[]>([]);
   const [selectedIndividualMetrics, setSelectedIndividualMetrics] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
@@ -100,7 +100,13 @@ export default function AIWorkbench() {
               hidden.add(`${metric.name} Z`);
             });
           }
-
+        } else if (groupName === 'MVRV Ratio') {
+          // For MVRV Ratio, show all metrics, hide Z-scores
+          if (group.metrics) {
+            group.metrics.forEach(metric => {
+              hidden.add(`${metric.name} Z`);
+            });
+          }
         } else {
           // For other groups, hide all traces by default for better UX
           if (group.metrics) {
@@ -150,7 +156,14 @@ export default function AIWorkbench() {
 
   // Get currently selected metrics for display
   const selectedMetricKeys = getSelectedMetricKeys();
+  console.log('Selected groups:', selectedGroups);
   console.log('Selected metric keys:', selectedMetricKeys);
+  console.log('Available metrics in data:', metricData ? Object.keys(metricData.metrics) : 'No data');
+  console.log('MVRV metrics available:', metricData ? {
+    marketcap: metricData.metrics.marketcap?.length || 0,
+    realizedCap: metricData.metrics['realized-cap']?.length || 0,
+    mvrvRatio: metricData.metrics['mvrv-ratio']?.length || 0
+  } : 'No data');
 
   // Smart axis assignment logic
   const getAxisAssignment = useCallback((metrics: string[]) => {
@@ -158,7 +171,12 @@ export default function AIWorkbench() {
     const rightAxisMetrics: string[] = [];
     
     metrics.forEach(metric => {
-      if (METRIC_SCALE_TYPES.USD_LARGE.includes(metric as any)) {
+      // Special case: MVRV group - Market Cap and Realized Cap on left, MVRV Ratio on right
+      if (metric === 'marketcap' || metric === 'realized-cap') {
+        leftAxisMetrics.push(metric); // Large USD values on log scale
+      } else if (metric === 'mvrv-ratio') {
+        rightAxisMetrics.push(metric); // Ratio on linear scale
+      } else if (METRIC_SCALE_TYPES.USD_LARGE.includes(metric as any)) {
         leftAxisMetrics.push(metric); // Log scale for large USD values
       } else if (METRIC_SCALE_TYPES.USD_PRICE.includes(metric as any)) {
         leftAxisMetrics.push(metric); // Log scale for price values
@@ -200,6 +218,13 @@ export default function AIWorkbench() {
 
   // Memoized data processing
   const processedData = useMemo(() => {
+    console.log('Processing data:', {
+      hasMetricData: !!metricData,
+      sliderRange,
+      selectedMetricKeysLength: selectedMetricKeys.length,
+      selectedMetricKeys
+    });
+    
     if (!metricData || !sliderRange || selectedMetricKeys.length === 0) return null;
     
     const [start, end] = sliderRange;
@@ -217,6 +242,14 @@ export default function AIWorkbench() {
       // Get the metric data
       const metricDataArray = metricData.metrics[metricKey] || [];
       slicedMetrics[metricKey] = metricDataArray.slice(start, end + 1);
+      
+      console.log(`Slicing ${metricKey}:`, {
+        originalLength: metricDataArray.length,
+        start,
+        end,
+        slicedLength: slicedMetrics[metricKey].length,
+        sampleValues: slicedMetrics[metricKey].slice(0, 3)
+      });
       
       // Find metric config to check if z-score is needed (same logic as chart data)
       let metricConfig = METRIC_GROUPS.flatMap(g => g.metrics).find(m => m?.key === metricKey);
@@ -268,6 +301,17 @@ export default function AIWorkbench() {
     
     const { x, zScores, slicedMetrics } = processedData;
     const traces: unknown[] = [];
+    
+    console.log('Chart data generation:', {
+      selectedMetricKeys,
+      availableSlicedMetrics: Object.keys(slicedMetrics),
+      xLength: x.length,
+      sampleData: selectedMetricKeys.map(key => ({
+        key,
+        dataLength: slicedMetrics[key]?.length || 0,
+        sampleValues: slicedMetrics[key]?.slice(0, 3) || []
+      }))
+    });
     
     // Add metric traces
     selectedMetricKeys.forEach(metricKey => {
@@ -326,6 +370,13 @@ export default function AIWorkbench() {
       }
     });
     
+    console.log('Generated traces:', traces.length, traces.map(t => ({
+      name: (t as any).name,
+      yLength: (t as any).y?.length || 0,
+      yaxis: (t as any).yaxis,
+      visible: (t as any).visible
+    })));
+    
     return traces;
   }, [processedData, selectedMetricKeys, hiddenTraces]);
 
@@ -369,7 +420,7 @@ export default function AIWorkbench() {
     // Add right axis if needed
     if (hasRightAxis) {
       baseLayout.yaxis2 = {
-        title: 'Ratio / Z-Score (linear)',
+        title: 'MVRV Ratio (linear)',
         type: 'linear' as const,
         side: 'right' as const,
         color: 'white',

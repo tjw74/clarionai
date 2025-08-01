@@ -158,6 +158,33 @@ export const METRIC_GROUPS = [
 
     ],
   },
+  {
+    name: 'MVRV Ratio',
+    description: 'Market cap, realized cap, and their ratio',
+    metrics: [
+      {
+        key: 'marketcap',
+        name: 'Market Cap',
+        color: '#4CAF50',
+        yaxis: 'y2',
+        zScore: false,
+      },
+      {
+        key: 'realized-cap',
+        name: 'Network Realized Cap',
+        color: '#9C27B0',
+        yaxis: 'y2',
+        zScore: false,
+      },
+      {
+        key: 'mvrv-ratio',
+        name: 'MVRV Ratio',
+        color: '#FF5722',
+        yaxis: 'y2',
+        zScore: false,
+      },
+    ],
+  },
 
 
 ];
