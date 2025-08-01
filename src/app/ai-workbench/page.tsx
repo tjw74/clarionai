@@ -376,10 +376,10 @@ export default function AIWorkbench() {
     });
     
     console.log('Generated traces:', traces.length, traces.map(t => ({
-      name: (t as any).name,
-      yLength: (t as any).y?.length || 0,
-      yaxis: (t as any).yaxis,
-      visible: (t as any).visible
+      name: (t as { name: string }).name,
+      yLength: (t as { y?: number[] }).y?.length || 0,
+      yaxis: (t as { yaxis?: string }).yaxis,
+      visible: (t as { visible?: boolean | string }).visible
     })));
     
     return traces;
@@ -387,7 +387,7 @@ export default function AIWorkbench() {
 
   // Dynamic dual-axis chart layout
   const chartLayout = useMemo(() => {
-    const baseLayout: any = {
+    const baseLayout: Record<string, unknown> = {
       autosize: true,
       paper_bgcolor: 'black',
       plot_bgcolor: 'black',
@@ -443,12 +443,12 @@ export default function AIWorkbench() {
     }
 
     return baseLayout;
-  }, [hasLeftAxis, hasRightAxis, rightAxisMetrics]);
+  }, [hasLeftAxis, hasRightAxis]);
 
   // Debounced resize handler
   const debouncedResizeHandler = useCallback(
     debounce(() => setPlotPanelKey(k => k + 1), 100),
-    [setPlotPanelKey]
+    []
   );
 
   useEffect(() => {
@@ -790,18 +790,19 @@ export default function AIWorkbench() {
                   <>
                     {/* Custom Legend Row */}
                     <div className="flex items-center justify-start gap-4 mb-2 px-2">
-                      {chartData.map((trace: any, index: number) => {
-                        const isHidden = hiddenTraces.has(trace.name);
+                      {chartData.map((trace, index: number) => {
+                        const typedTrace = trace as { name: string; line?: { color: string }; marker?: { color: string } };
+                        const isHidden = hiddenTraces.has(typedTrace.name);
                         return (
                           <button
                             key={index}
                             onClick={() => {
                               setHiddenTraces(prev => {
                                 const newHidden = new Set(prev);
-                                if (newHidden.has(trace.name)) {
-                                  newHidden.delete(trace.name);
+                                if (newHidden.has(typedTrace.name)) {
+                                  newHidden.delete(typedTrace.name);
                                 } else {
-                                  newHidden.add(trace.name);
+                                  newHidden.add(typedTrace.name);
                                 }
                                 return newHidden;
                               });
@@ -816,9 +817,9 @@ export default function AIWorkbench() {
                               className={`w-3 h-3 rounded-full transition-opacity ${
                                 isHidden ? 'opacity-40' : 'opacity-100'
                               }`}
-                              style={{ backgroundColor: trace.line?.color || trace.marker?.color || '#fff' }}
+                              style={{ backgroundColor: typedTrace.line?.color || typedTrace.marker?.color || '#fff' }}
                             />
-                            <span className="text-sm">{trace.name}</span>
+                            <span className="text-sm">{typedTrace.name}</span>
                           </button>
                         );
                       })}
