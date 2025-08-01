@@ -389,7 +389,7 @@ export default function AIWorkbench() {
       font: { color: 'white' },
       xaxis: {
         color: 'white',
-        gridcolor: '#374151',
+        gridcolor: 'rgba(55, 65, 81, 0.3)',
         title: 'Date',
         showgrid: true,
         gridwidth: 1
@@ -405,9 +405,9 @@ export default function AIWorkbench() {
         type: 'log' as const,
         side: 'left' as const,
         color: 'white',
-        gridcolor: '#374151',
+        gridcolor: 'rgba(55, 65, 81, 0.3)',
         showgrid: true,
-        showline: true,
+        showline: false,
         zeroline: false,
         tickformat: '.2s',
         showticklabels: true,
@@ -424,9 +424,9 @@ export default function AIWorkbench() {
         type: 'linear' as const,
         side: 'right' as const,
         color: 'white',
-        gridcolor: '#374151',
+        gridcolor: 'rgba(55, 65, 81, 0.3)',
         showgrid: true,
-        showline: true,
+        showline: false,
         zeroline: false,
         tickformat: '.2f',
         showticklabels: true,
@@ -774,7 +774,7 @@ export default function AIWorkbench() {
         {/* 2 main panels: left (unified), right (vertical split) */}
         <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0 border border-white/20 bg-black">
           {/* Unified Left Panel */}
-          <ResizablePanel defaultSize={50} minSize={20} className="flex-1 min-h-0 min-w-0 flex flex-col">
+          <ResizablePanel defaultSize={67} minSize={20} className="flex-1 min-h-0 min-w-0 flex flex-col">
             <div ref={panelRef} className="flex-1 min-h-0 min-w-0 flex flex-col p-2 bg-black border-r border-white/20">
               {(() => {
                 if (loading || !metricData) {
@@ -856,7 +856,7 @@ export default function AIWorkbench() {
           </ResizablePanel>
           <ResizableHandle className="border border-white/20 border-[1px]" />
           {/* Right side (vertical split) */}
-          <ResizablePanel defaultSize={50} minSize={20} className="min-w-0">
+          <ResizablePanel defaultSize={33} minSize={20} className="min-w-0">
             <ResizablePanelGroup direction="vertical" className="h-full min-h-0">
               {/* AI Analyst Panel */}
               <ResizablePanel defaultSize={70} minSize={30} className="min-h-0">
