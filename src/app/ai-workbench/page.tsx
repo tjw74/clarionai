@@ -129,7 +129,7 @@ export default function AIWorkbench() {
   }>>([]);
   const [userMessage, setUserMessage] = useState('');
 
-  // Helper function to get all selected metric keys (groups + subgroups + individual, deduplicated)
+  // Helper function to get all selected metric keys (groups + individual, deduplicated)
   const getSelectedMetricKeys = useCallback(() => {
     const groupMetrics = new Set<string>();
     const individualMetrics = new Set(selectedIndividualMetrics);
@@ -138,7 +138,6 @@ export default function AIWorkbench() {
     selectedGroups.forEach(groupName => {
       const group = METRIC_GROUPS.find(g => g.name === groupName);
       if (group) {
-        // Handle groups with direct metrics (no subgroups)
         group.metrics.forEach(metric => {
           groupMetrics.add(metric.key);
         });
@@ -147,17 +146,26 @@ export default function AIWorkbench() {
     
     // Combine and deduplicate
     return [...groupMetrics, ...individualMetrics];
-  }, [selectedGroups, selectedSubgroups, selectedIndividualMetrics]);
+  }, [selectedGroups, selectedIndividualMetrics]);
 
   // Get currently selected metrics for display
   const selectedMetricKeys = getSelectedMetricKeys();
   console.log('Selected metric keys:', selectedMetricKeys);
 
-  // Update hidden traces when selected groups or subgroups change
+  // Update hidden traces when selected groups or individual metrics change
   useEffect(() => {
     const defaultHidden = getDefaultHiddenTraces(selectedGroups, selectedSubgroups);
+    
+    // Also hide Z-scores for individually selected metrics by default
+    selectedIndividualMetrics.forEach(metricKey => {
+      const displayName = METRIC_DISPLAY_NAMES[metricKey];
+      if (displayName) {
+        defaultHidden.add(`${displayName} Z`);
+      }
+    });
+    
     setHiddenTraces(defaultHidden);
-  }, [selectedGroups, selectedSubgroups, getDefaultHiddenTraces]);
+  }, [selectedGroups, selectedSubgroups, selectedIndividualMetrics, getDefaultHiddenTraces]);
 
   // Memoized data processing
   const processedData = useMemo(() => {
@@ -179,8 +187,21 @@ export default function AIWorkbench() {
       const metricDataArray = metricData.metrics[metricKey] || [];
       slicedMetrics[metricKey] = metricDataArray.slice(start, end + 1);
       
-      // Find metric config to check if z-score is needed
-      const metricConfig = METRIC_GROUPS.flatMap(g => g.metrics).find(m => m?.key === metricKey);
+      // Find metric config to check if z-score is needed (same logic as chart data)
+      let metricConfig = METRIC_GROUPS.flatMap(g => g.metrics).find(m => m?.key === metricKey);
+      if (!metricConfig) {
+        const displayName = METRIC_DISPLAY_NAMES[metricKey];
+        if (displayName) {
+          metricConfig = {
+            key: metricKey,
+            name: displayName,
+            color: '#33B1FF',
+            yaxis: 'y',
+            zScore: false,
+          };
+        }
+      }
+      
       if (metricConfig?.zScore) {
         zScores[metricKey] = calculateZScores(metricDataArray, 1460).slice(start, end + 1);
       }
@@ -220,54 +241,40 @@ export default function AIWorkbench() {
     // Add metric traces
     selectedMetricKeys.forEach(metricKey => {
       // Find metric config for display name and styling
-      const metricConfig = METRIC_GROUPS.flatMap(g => g.metrics).find(m => m?.key === metricKey);
-      if (!metricConfig) return;
+      let metricConfig = METRIC_GROUPS.flatMap(g => g.metrics).find(m => m?.key === metricKey);
       
-      // Main metric trace
-      const traceData = slicedMetrics[metricKey];
-      const isMVRVMetric = metricKey === 'marketcap' || metricKey === 'realized-cap' || metricKey === 'mvrv-ratio';
-      
-      // Filter data for MVRV metrics to handle log scale properly
-      const filteredData = isMVRVMetric 
-        ? traceData.map(val => {
-            if (val === null || val === undefined || isNaN(val) || val <= 0) {
-              return null; // Use null for invalid/zero/negative values
-            }
-            return val;
-          })
-        : traceData;
-      
-      // Validate data AFTER filtering
-      const hasValidData = filteredData && filteredData.length > 0 && filteredData.some(val => val !== null && val !== undefined && !isNaN(val));
-      
-      if (hasValidData) {
-        // Check if trace should be visible based on hiddenTraces state
-        const shouldBeVisible = !hiddenTraces.has(metricConfig.name);
-        
-        traces.push({
-          x,
-          y: filteredData,
-          name: metricConfig.name,
-          type: 'scatter' as const,
-          mode: 'lines' as const,
-          line: { color: metricConfig.color, width: 1 },
-          yaxis: metricConfig.yaxis,
-          visible: shouldBeVisible ? true : 'legendonly',
-          connectgaps: false,
-        });
-      } else {
-        // Debug MVRV metrics specifically
-        if (metricKey === 'marketcap' || metricKey === 'realized-cap' || metricKey === 'mvrv-ratio') {
-          console.warn(`MVRV metric ${metricKey} (${metricConfig.name}) failed validation:`, {
-            traceDataLength: traceData?.length,
-            hasData: traceData && traceData.length > 0,
-            sampleData: traceData?.slice(0, 10),
-            validCount: traceData?.filter(val => val !== null && val !== undefined && !isNaN(val)).length
-          });
-        } else {
-          console.warn(`No valid data for metric: ${metricKey} (${metricConfig.name})`);
+      // If not found in groups, create config from METRICS_LIST and METRIC_DISPLAY_NAMES
+      if (!metricConfig) {
+        const displayName = METRIC_DISPLAY_NAMES[metricKey];
+        if (displayName) {
+          metricConfig = {
+            key: metricKey,
+            name: displayName,
+            color: '#33B1FF', // Default color
+            yaxis: 'y', // Default y-axis
+            zScore: false,
+          };
         }
       }
+      
+      if (!metricConfig) return;
+      
+      // Main metric trace - no filtering, just plot the data
+      const traceData = slicedMetrics[metricKey];
+      
+      // Check if trace should be visible based on hiddenTraces state
+      const shouldBeVisible = !hiddenTraces.has(metricConfig.name);
+      
+      traces.push({
+        x,
+        y: traceData,
+        name: metricConfig.name,
+        type: 'scatter' as const,
+        mode: 'lines' as const,
+        line: { color: metricConfig.color, width: 1 },
+        visible: shouldBeVisible ? true : 'legendonly',
+        connectgaps: false,
+      });
       
       // Z-score trace if enabled
       if (metricConfig.zScore && zScores[metricKey]) {
@@ -278,7 +285,6 @@ export default function AIWorkbench() {
           type: 'scatter' as const,
           mode: 'lines' as const,
           line: { color: metricConfig.color, width: 1 },
-          yaxis: 'y', // Z-scores always on left Y-axis
           visible: hiddenTraces.has(`${metricConfig.name} Z`) ? 'legendonly' : true,
         });
       }
@@ -287,16 +293,10 @@ export default function AIWorkbench() {
     return traces;
   }, [processedData, selectedMetricKeys, hiddenTraces]);
 
-  // Memoized chart layout
+  // Simple chart layout - just show the data
   const chartLayout = useMemo(() => {
-    // Check if MVRV metrics are selected to determine axis types
-    const hasMVRVMetrics = selectedMetricKeys.includes('marketcap') || 
-                          selectedMetricKeys.includes('realized-cap') || 
-                          selectedMetricKeys.includes('mvrv-ratio');
-    
     return {
       autosize: true,
-      autoresize: true,
       paper_bgcolor: 'black',
       plot_bgcolor: 'black',
       font: { color: 'white' },
@@ -308,40 +308,23 @@ export default function AIWorkbench() {
         gridwidth: 1
       },
       yaxis: {
-        title: hasMVRVMetrics ? 'Market Cap / Realized Cap (log2)' : 'Z-Score / Ratio',
-        type: hasMVRVMetrics ? 'log' as const : 'linear' as const,
-        side: 'left' as const,
+        title: 'Value',
+        type: 'log' as const,
         color: 'white',
         gridcolor: '#374151',
-        showgrid: true,
-        showline: false,
-        zeroline: false,
-        gridwidth: 1,
-        tickformat: hasMVRVMetrics ? '.2s' : '.2f'
-      },
-      yaxis2: {
-        title: hasMVRVMetrics ? 'MVRV Ratio (linear)' : 'Value',
-        type: hasMVRVMetrics ? 'linear' as const : 'log' as const,
-        side: 'right' as const,
-        color: 'white',
-        gridcolor: '#374151',
-        tickformat: hasMVRVMetrics ? '.2f' : '.2s',
         showgrid: true,
         showline: true,
         zeroline: false,
-        exponentformat: hasMVRVMetrics ? undefined : 'power',
-        showexponent: hasMVRVMetrics ? undefined : 'all',
-        dtick: hasMVRVMetrics ? undefined : 1,
-        overlaying: false,
+        tickformat: '.2s',
+        showticklabels: true,
         tickmode: 'auto',
-        nticks: 5,
-        showticklabels: hasMVRVMetrics
+        nticks: 8,
+        tickfont: { color: 'white', size: 10 }
       },
-
-      margin: { l: 80, r: 160, t: 20, b: 40 },
-      showlegend: false, // Hide the built-in legend
+      margin: { l: 80, r: 80, t: 20, b: 40 },
+      showlegend: false,
     };
-  }, [selectedMetricKeys]);
+  }, []);
 
   // Debounced resize handler
   const debouncedResizeHandler = useCallback(
