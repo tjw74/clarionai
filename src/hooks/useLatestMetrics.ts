@@ -6,6 +6,10 @@ export interface LatestMetrics {
   marketCap: number | null;
   realizedCap: number | null;
   mvrvRatio: number | null;
+  unrealizedProfit: number | null;
+  unrealizedLoss: number | null;
+  realizedProfit: number | null;
+  realizedLoss: number | null;
   priceChange30d: number | null;
   priceChange90d: number | null;
   priceChange180d: number | null;
@@ -18,6 +22,18 @@ export interface LatestMetrics {
   mvrvChange30d: number | null;
   mvrvChange90d: number | null;
   mvrvChange180d: number | null;
+  unrealizedProfitChange30d: number | null;
+  unrealizedProfitChange90d: number | null;
+  unrealizedProfitChange180d: number | null;
+  unrealizedLossChange30d: number | null;
+  unrealizedLossChange90d: number | null;
+  unrealizedLossChange180d: number | null;
+  realizedProfitChange30d: number | null;
+  realizedProfitChange90d: number | null;
+  realizedProfitChange180d: number | null;
+  realizedLossChange30d: number | null;
+  realizedLossChange90d: number | null;
+  realizedLossChange180d: number | null;
   loading: boolean;
   error: string | null;
 }
@@ -28,6 +44,10 @@ export function useLatestMetrics(): LatestMetrics {
     marketCap: null,
     realizedCap: null,
     mvrvRatio: null,
+    unrealizedProfit: null,
+    unrealizedLoss: null,
+    realizedProfit: null,
+    realizedLoss: null,
     priceChange30d: null,
     priceChange90d: null,
     priceChange180d: null,
@@ -40,6 +60,18 @@ export function useLatestMetrics(): LatestMetrics {
     mvrvChange30d: null,
     mvrvChange90d: null,
     mvrvChange180d: null,
+    unrealizedProfitChange30d: null,
+    unrealizedProfitChange90d: null,
+    unrealizedProfitChange180d: null,
+    unrealizedLossChange30d: null,
+    unrealizedLossChange90d: null,
+    unrealizedLossChange180d: null,
+    realizedProfitChange30d: null,
+    realizedProfitChange90d: null,
+    realizedProfitChange180d: null,
+    realizedLossChange30d: null,
+    realizedLossChange90d: null,
+    realizedLossChange180d: null,
     loading: true,
     error: null,
   });
@@ -55,6 +87,10 @@ export function useLatestMetrics(): LatestMetrics {
         const price = data.metrics['close']?.[latestIndex] || null;
         const marketCap = data.metrics['marketcap']?.[latestIndex] || null;
         const realizedCap = data.metrics['realized-cap']?.[latestIndex] || null;
+        const unrealizedProfit = data.metrics['unrealized-profit']?.[latestIndex] || null;
+        const unrealizedLoss = data.metrics['negative-unrealized-loss']?.[latestIndex] || null;
+        const realizedProfit = data.metrics['realized-profit']?.[latestIndex] || null;
+        const realizedLoss = data.metrics['negative-realized-loss']?.[latestIndex] || null;
         
         // Calculate MVRV Ratio
         let mvrvRatio = null;
@@ -84,6 +120,10 @@ export function useLatestMetrics(): LatestMetrics {
           marketCap,
           realizedCap,
           mvrvRatio,
+          unrealizedProfit,
+          unrealizedLoss,
+          realizedProfit,
+          realizedLoss,
           priceChange30d: calculateChange(price, 30, 'close'),
           priceChange90d: calculateChange(price, 90, 'close'),
           priceChange180d: calculateChange(price, 180, 'close'),
@@ -96,6 +136,18 @@ export function useLatestMetrics(): LatestMetrics {
           mvrvChange30d: calculateMvrvChange(mvrvRatio, 30),
           mvrvChange90d: calculateMvrvChange(mvrvRatio, 90),
           mvrvChange180d: calculateMvrvChange(mvrvRatio, 180),
+          unrealizedProfitChange30d: calculateChange(unrealizedProfit, 30, 'unrealized-profit'),
+          unrealizedProfitChange90d: calculateChange(unrealizedProfit, 90, 'unrealized-profit'),
+          unrealizedProfitChange180d: calculateChange(unrealizedProfit, 180, 'unrealized-profit'),
+          unrealizedLossChange30d: calculateChange(unrealizedLoss, 30, 'negative-unrealized-loss'),
+          unrealizedLossChange90d: calculateChange(unrealizedLoss, 90, 'negative-unrealized-loss'),
+          unrealizedLossChange180d: calculateChange(unrealizedLoss, 180, 'negative-unrealized-loss'),
+          realizedProfitChange30d: calculateChange(realizedProfit, 30, 'realized-profit'),
+          realizedProfitChange90d: calculateChange(realizedProfit, 90, 'realized-profit'),
+          realizedProfitChange180d: calculateChange(realizedProfit, 180, 'realized-profit'),
+          realizedLossChange30d: calculateChange(realizedLoss, 30, 'negative-realized-loss'),
+          realizedLossChange90d: calculateChange(realizedLoss, 90, 'negative-realized-loss'),
+          realizedLossChange180d: calculateChange(realizedLoss, 180, 'negative-realized-loss'),
           loading: false,
           error: null,
         });
