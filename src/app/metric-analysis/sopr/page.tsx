@@ -151,9 +151,9 @@ export default function SOPRAnalysis() {
 
   // Get effective time range for each panel
   const panel1EffectiveRange = panel1SliderRange || dashboardTimeRange;
-  const panel2EffectiveRange = panel2SliderRange || dashboardTimeRange;
+  const panel2EffectiveRange = panel1SliderRange || dashboardTimeRange; // Sync with panel 1
   const panel3EffectiveRange = panel3SliderRange || dashboardTimeRange;
-  const panel4EffectiveRange = panel4SliderRange || dashboardTimeRange;
+  const panel4EffectiveRange = panel3SliderRange || dashboardTimeRange; // Sync with panel 3
 
   // Format date range for display
   const formatDateRange = () => {
@@ -1184,7 +1184,10 @@ export default function SOPRAnalysis() {
                     max={priceData.dates.length - 1}
                     step={1}
                     value={panel1EffectiveRange || [0, 0]}
-                    onValueChange={([start, end]) => setPanel1SliderRange([start, end])}
+                    onValueChange={([start, end]) => {
+                      setPanel1SliderRange([start, end]);
+                      setPanel2SliderRange([start, end]); // Sync panel 2
+                    }}
                     minStepsBetweenThumbs={1}
                   >
                     <Slider.Track className="bg-[#444a] h-[3px] w-full rounded-full">
@@ -1229,7 +1232,10 @@ export default function SOPRAnalysis() {
                     max={priceData.dates.length - 1}
                     step={1}
                     value={panel2EffectiveRange || [0, 0]}
-                    onValueChange={([start, end]) => setPanel2SliderRange([start, end])}
+                    onValueChange={([start, end]) => {
+                      setPanel1SliderRange([start, end]); // Sync panel 1
+                      setPanel2SliderRange([start, end]);
+                    }}
                     minStepsBetweenThumbs={1}
                   >
                     <Slider.Track className="bg-[#444a] h-[3px] w-full rounded-full">
@@ -1274,7 +1280,10 @@ export default function SOPRAnalysis() {
                     max={priceData.dates.length - 1}
                     step={1}
                     value={panel3EffectiveRange || [0, 0]}
-                    onValueChange={([start, end]) => setPanel3SliderRange([start, end])}
+                    onValueChange={([start, end]) => {
+                      setPanel3SliderRange([start, end]);
+                      setPanel4SliderRange([start, end]); // Sync panel 4
+                    }}
                     minStepsBetweenThumbs={1}
                   >
                     <Slider.Track className="bg-[#444a] h-[3px] w-full rounded-full">
@@ -1319,7 +1328,10 @@ export default function SOPRAnalysis() {
                     max={priceData.dates.length - 1}
                     step={1}
                     value={panel4EffectiveRange || [0, 0]}
-                    onValueChange={([start, end]) => setPanel4SliderRange([start, end])}
+                    onValueChange={([start, end]) => {
+                      setPanel3SliderRange([start, end]); // Sync panel 3
+                      setPanel4SliderRange([start, end]);
+                    }}
                     minStepsBetweenThumbs={1}
                   >
                     <Slider.Track className="bg-[#444a] h-[3px] w-full rounded-full">
