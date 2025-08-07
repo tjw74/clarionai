@@ -33,7 +33,7 @@ export default function Sidebar() {
         <span>{'<'}</span>
       </button>
       {/* Logo and title row */}
-      <div className="flex flex-col gap-1 px-6 pt-8 pb-4">
+      <div className="flex items-center justify-between px-6 h-16">
         <div className="flex flex-row items-center gap-3">
           <Image
             src="/clarion_chain_logo.png"
@@ -44,10 +44,11 @@ export default function Sidebar() {
           />
           <span className="text-lg font-bold tracking-wide">ClarionChain</span>
         </div>
-        <span className="text-xs text-white/60 pl-12">Powered by BRK</span>
+        <div className="flex items-center gap-2">
+          {/* Empty space to match main header structure */}
+        </div>
       </div>
-      {/* Divider, aligned with main content border */}
-      <div className="border-b border-white/20 w-full" />
+      {/* Unified horizontal divider is rendered globally in layout */}
       {/* Navigation */}
       <nav className="flex flex-col gap-2 mt-8 px-4">
         <Link

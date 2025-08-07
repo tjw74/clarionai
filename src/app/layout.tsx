@@ -36,9 +36,13 @@ export default function RootLayout({
           {/* Sidebar */}
           <Sidebar />
           {/* Main content */}
-          <main className="flex flex-col flex-1 min-h-0 bg-black text-white border-l border-white/20">
-            {children}
-          </main>
+          <div className="relative flex-1 min-h-0">
+            {/* Unified horizontal divider */}
+            <div className="pointer-events-none absolute left-0 right-0 top-16 h-px bg-white/20 z-30" />
+            <main className="flex flex-col flex-1 min-h-0 bg-black text-white border-l border-white/20">
+              {children}
+            </main>
+          </div>
         </div>
       </body>
     </html>

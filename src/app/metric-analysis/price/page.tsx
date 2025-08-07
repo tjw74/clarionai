@@ -274,7 +274,7 @@ export default function PriceAnalysis() {
   if (loading) {
     return (
       <div className="bg-black text-white min-h-screen w-full flex flex-col border-b border-white/20">
-        <header className="py-8 border-b border-white/20 w-full flex justify-center">
+        <header className="h-16 w-full flex items-center justify-center">
           <h1 className="text-3xl font-bold">Price Analysis</h1>
         </header>
         <div className="flex-1 flex items-center justify-center">
@@ -287,7 +287,7 @@ export default function PriceAnalysis() {
   if (error) {
     return (
       <div className="bg-black text-white min-h-screen w-full flex flex-col border-b border-white/20">
-        <header className="py-8 border-b border-white/20 w-full flex justify-center">
+        <header className="h-16 w-full flex items-center justify-center">
           <h1 className="text-3xl font-bold">Price Analysis</h1>
         </header>
         <div className="flex-1 flex items-center justify-center">
@@ -299,7 +299,7 @@ export default function PriceAnalysis() {
 
   return (
     <div className="bg-black text-white min-h-screen w-full flex flex-col border-b border-white/20">
-      <header className="py-8 border-b border-white/20 w-full flex justify-center">
+      <header className="h-16 w-full flex items-center justify-center">
         <h1 className="text-3xl font-bold">Price Analysis</h1>
       </header>
 

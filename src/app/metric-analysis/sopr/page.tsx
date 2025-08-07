@@ -1309,7 +1309,7 @@ export default function SOPRAnalysis() {
   if (loading) {
     return (
       <div className="bg-black text-white min-h-screen w-full flex flex-col border-b border-white/20">
-        <header className="py-8 border-b border-white/20 w-full flex justify-center">
+        <header className="h-16 w-full flex items-center justify-center">
           <h1 className="text-3xl font-bold">SOPR Analysis</h1>
         </header>
         <div className="flex-1 flex items-center justify-center">
@@ -1322,7 +1322,7 @@ export default function SOPRAnalysis() {
   if (error) {
     return (
       <div className="bg-black text-white min-h-screen w-full flex flex-col border-b border-white/20">
-        <header className="py-8 border-b border-white/20 w-full flex justify-center">
+        <header className="h-16 w-full flex items-center justify-center">
           <h1 className="text-3xl font-bold">SOPR Analysis</h1>
         </header>
         <div className="flex-1 flex items-center justify-center">
@@ -1334,7 +1334,7 @@ export default function SOPRAnalysis() {
 
   return (
     <div className="bg-black text-white min-h-screen w-full flex flex-col border-b border-white/20">
-      <header className="py-8 border-b border-white/20 w-full flex justify-between items-center px-6">
+      <header className="h-16 w-full flex justify-between items-center px-6">
         <div className="flex-1"></div>
         <h1 className="text-3xl font-bold">SOPR</h1>
         <div className="flex-1 flex justify-end">

@@ -686,7 +686,7 @@ export default function AIWorkbench() {
 
   return (
     <div className="bg-black text-white min-h-screen w-full flex flex-col border-b border-white/20">
-      <header className="py-8 border-b border-white/20 w-full flex items-center justify-between px-8">
+      <header className="h-16 w-full flex items-center justify-between px-8">
         <h1 className="text-3xl font-bold">AI Workbench</h1>
         {/* Metric selection with combobox */}
         <div className="flex items-center gap-2">
