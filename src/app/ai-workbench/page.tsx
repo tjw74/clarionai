@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
-import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from "@/components/ui/resizable";
 import dynamic from 'next/dynamic';
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 import { fetchAllMetrics, type MetricData, calculateZScores } from '../../datamanager';
@@ -83,7 +82,6 @@ export default function AIWorkbench() {
   const [loading, setLoading] = useState(true);
   const [sliderRange, setSliderRange] = useState<[number, number] | null>(null);
   // const [selectedGroupIndex, setSelectedGroupIndex] = useState(0);
-  const [plotPanelKey, setPlotPanelKey] = useState(0);
   const [hiddenTraces, setHiddenTraces] = useState<Set<string>>(new Set()); // Track hidden traces by name
 
   // Function to get default hidden traces based on selected groups and subgroups
@@ -134,6 +132,8 @@ export default function AIWorkbench() {
     timestamp: Date;
   }>>([]);
   const [userMessage, setUserMessage] = useState('');
+  const [aiCollapsed, setAICollapsed] = useState(false);
+  const [focusMode, setFocusMode] = useState(false);
 
   // Helper function to get all selected metric keys (groups + individual, deduplicated)
   const getSelectedMetricKeys = useCallback(() => {
@@ -445,11 +445,7 @@ export default function AIWorkbench() {
     return baseLayout;
   }, [hasLeftAxis, hasRightAxis]);
 
-  // Debounced resize handler
-  const debouncedResizeHandler = useCallback(
-    debounce(() => setPlotPanelKey(k => k + 1), 100),
-    []
-  );
+  // Removed external resize remount loop; rely on Plotly's internal resize handling
 
   useEffect(() => {
     setLoading(true);
@@ -474,12 +470,7 @@ export default function AIWorkbench() {
     }
   }, [metricData, sliderRange]);
 
-  useEffect(() => {
-    if (!panelRef.current) return;
-    const ro = new window.ResizeObserver(debouncedResizeHandler);
-    ro.observe(panelRef.current);
-    return () => ro.disconnect();
-  }, [debouncedResizeHandler]);
+  // No ResizeObserver required; prevents resize/remount oscillation
 
   // Screenshot capture function
   const captureChartScreenshot = async (): Promise<string> => {
@@ -502,6 +493,10 @@ export default function AIWorkbench() {
         useCORS: true,
         allowTaint: true,
         logging: false,
+        onclone: (doc: Document) => {
+          const slider = doc.querySelector('.time-slider') as HTMLElement | null;
+          if (slider) slider.style.display = 'none';
+        },
       });
 
       // Restore the time slider
@@ -826,7 +821,6 @@ export default function AIWorkbench() {
                     </div>
                     <div className="relative flex-1 min-h-0 w-full h-full">
                       <Plot
-                        key={plotPanelKey}
                         divId="ai-workbench-plot"
                         data={chartData}
                         layout={chartLayout}
@@ -839,7 +833,7 @@ export default function AIWorkbench() {
                     {metricData && sliderRange && (
                       <div className="w-full flex justify-center items-center mt-2">
                         <Slider.Root
-                          className="relative w-full max-w-2xl h-6 flex items-center"
+                          className="time-slider relative w-full max-w-2xl h-6 flex items-center"
                           min={0}
                           max={metricData.dates.length - 1}
                           step={1}
@@ -902,9 +896,9 @@ export default function AIWorkbench() {
                           {isAnalyzing ? 'Analyzing...' : 'Analysis'}
                         </button>
                       </h3>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
                         <Select value={selectedProvider} onValueChange={setSelectedProvider}>
-                          <SelectTrigger className="w-28 bg-black border-white/20 text-white text-sm">
+                          <SelectTrigger className="w-28 min-w-[7rem] bg-black border-white/20 text-white text-sm">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent className="bg-black border-white/20">
@@ -917,7 +911,7 @@ export default function AIWorkbench() {
                           placeholder="API Key"
                           value={apiKey}
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setApiKey(e.target.value)}
-                          className="w-48 bg-black border-white/20 text-white placeholder:text-white/50 text-sm"
+                          className="w-48 min-w-[12rem] bg-black border-white/20 text-white placeholder:text-white/50 text-sm"
                         />
                       </div>
                     </div>

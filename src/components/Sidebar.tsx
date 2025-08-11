@@ -22,7 +22,7 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="relative w-56 h-screen bg-black border-r border-white/20 flex flex-col shadow-lg z-40">
+    <aside className="relative w-56 h-screen bg-black border-r border-white/20 flex flex-col shadow-lg z-40 flex-none">
       {/* Collapse button */}
       <button
         className="absolute -right-3 top-4 z-50 w-8 h-8 flex items-center justify-center bg-black border border-white/20 rounded-full text-white hover:bg-white/10"
