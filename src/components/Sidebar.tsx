@@ -11,7 +11,7 @@ export default function Sidebar() {
   if (!open) {
     return (
       <button
-        className="fixed top-4 left-2 z-50 w-8 h-8 flex items-center justify-center bg-black border border-white/20 rounded-full text-white hover:bg-white/10 shadow-lg"
+        className="fixed top-1/2 -translate-y-1/2 left-0 z-50 w-8 h-8 flex items-center justify-center bg-black border border-white/20 rounded-full text-white hover:bg-white/10 shadow-lg"
         onClick={() => setOpen(true)}
         aria-label="Open sidebar"
         type="button"
@@ -25,7 +25,7 @@ export default function Sidebar() {
     <aside className="relative w-56 h-screen bg-black border-r border-white/20 flex flex-col shadow-lg z-40 flex-none">
       {/* Collapse button */}
       <button
-        className="absolute -right-3 top-4 z-50 w-8 h-8 flex items-center justify-center bg-black border border-white/20 rounded-full text-white hover:bg-white/10"
+        className="absolute -right-4 top-1/2 -translate-y-1/2 z-50 w-8 h-8 flex items-center justify-center bg-black border border-white/20 rounded-full text-white hover:bg-white/10"
         onClick={() => setOpen(false)}
         aria-label="Collapse sidebar"
         type="button"

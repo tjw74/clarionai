@@ -770,12 +770,9 @@ export default function AIWorkbench() {
           </Popover>
         </div>
       </header>
-      <div className="flex flex-col flex-1 p-4 gap-4">
-        {/* 2 main panels: left (unified), right (vertical split) */}
-        <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0 border border-white/20 bg-black">
-          {/* Unified Left Panel */}
-          <ResizablePanel defaultSize={67} minSize={20} className="flex-1 min-h-0 min-w-0 flex flex-col">
-            <div ref={panelRef} className="flex-1 min-h-0 min-w-0 flex flex-col p-2 bg-black border-r border-white/20">
+      <div className="flex flex-1 min-h-0 p-4 gap-4 items-stretch">
+        {/* Chart Column */}
+        <section ref={panelRef} className="flex-1 min-h-0 min-w-0 flex flex-col p-2 bg-black border border-white/20 rounded-md relative">
               {(() => {
                 if (loading || !metricData) {
                   return <span className="text-white/60">Loading chart...</span>;
@@ -852,15 +849,10 @@ export default function AIWorkbench() {
                   </>
                 );
               })()}
-            </div>
-          </ResizablePanel>
-          <ResizableHandle className="border border-white/20 border-[1px]" />
-          {/* Right side (vertical split) */}
-          <ResizablePanel defaultSize={33} minSize={20} className="min-w-0">
-            <ResizablePanelGroup direction="vertical" className="h-full min-h-0">
-              {/* AI Analyst Panel */}
-              <ResizablePanel defaultSize={70} minSize={30} className="min-h-0">
-                <div className="flex flex-col h-full w-full bg-black border-b border-white/20">
+        </section>
+        {/* AI Column */}
+        <aside className="w-[420px] md:w-[360px] min-w-[320px] h-full flex flex-col bg-black border border-white/20 rounded-md">
+          <div className="flex flex-col h-full w-full bg-black border-b border-white/20">
                   {/* AI Analysis Header */}
                   <div className="p-4 border-b border-white/20 bg-black">
                     <div className="flex items-center justify-between">
@@ -986,18 +978,8 @@ export default function AIWorkbench() {
                       </Button>
                     </div>
                   </div>
-                </div>
-              </ResizablePanel>
-              <ResizableHandle className="border border-white/20 border-[1px]" />
-              {/* Bottom Right */}
-              <ResizablePanel defaultSize={30} minSize={20} className="min-h-0">
-                <div className="flex flex-col h-full w-full items-center justify-center p-2 bg-black">
-                  <span className="text-white text-lg font-semibold">Bottom Right ({selectedMetricKeys.length} metrics)</span>
-                </div>
-              </ResizablePanel>
-            </ResizablePanelGroup>
-          </ResizablePanel>
-        </ResizablePanelGroup>
+          </div>
+        </aside>
       </div>
     </div>
   );
