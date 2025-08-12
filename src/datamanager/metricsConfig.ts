@@ -21,6 +21,7 @@ export const METRICS_LIST = [
   'adjusted-spent-output-profit-ratio',
   'sell-side-risk-ratio',
   'liveliness',
+  'short-term-holders-realized-price',
   'short-term-holders-supply',
   'short-term-holders-utxo-count',
   'short-term-holders-realized-cap',
@@ -53,7 +54,7 @@ export const ALL_METRICS_LIST = [
 // Metric scale types for axis assignment
 export const METRIC_SCALE_TYPES = {
   USD_LARGE: ['marketcap', 'realized-cap'], // Billions/Trillions - Log scale
-  USD_PRICE: ['close', 'realized-price', '200d-sma', 'true-market-mean', 'vaulted-price'], // Thousands - Log scale
+  USD_PRICE: ['close', 'realized-price', '200d-sma', 'true-market-mean', 'vaulted-price', 'short-term-holders-realized-price'], // Thousands - Log scale
   RATIO: ['mvrv-ratio', 'adjusted-spent-output-profit-ratio', 'sell-side-risk-ratio'], // 0-10 range - Linear scale
   Z_SCORE: ['*_z'], // -3 to +3 range - Linear scale
   PERCENTAGE: ['liveliness'], // 0-100% - Linear scale
@@ -68,6 +69,7 @@ export const METRIC_DISPLAY_NAMES: Record<string, string> = {
   '200d-sma': '200d SMA',
   'true-market-mean': 'True Market Mean',
   'vaulted-price': 'Vaulted Price',
+  'short-term-holders-realized-price': 'STH Realized Price',
   
   // Market cap metrics
   'marketcap': 'Market Cap',
@@ -124,6 +126,13 @@ export const METRIC_GROUPS = [
         key: 'close',
         name: 'Price',
         color: '#33B1FF',
+        yaxis: 'y2',
+        zScore: false,
+      },
+      {
+        key: 'short-term-holders-realized-price',
+        name: 'STH Realized Price',
+        color: '#7dd3fc',
         yaxis: 'y2',
         zScore: false,
       },

@@ -18,20 +18,33 @@ export async function fetchAllMetrics(apiBaseUrl: string = DEFAULT_API_BASE): Pr
   const promises = METRICS_LIST.map(async (metric) => {
     const url = `${apiBaseUrl}/api/vecs/query?index=dateindex&ids=date,${metric}&format=json`;
     console.log(`Fetching ${metric} from: ${url}`);
-    
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch ${metric}: ${response.status} ${response.statusText}`);
+
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`status ${response.status}`);
+      const data = await response.json();
+      if (!Array.isArray(data) || data.length < 2) throw new Error('bad format');
+      const [dates, values] = data;
+      return { metric, dates, values };
+    } catch (err) {
+      // Fallback for metrics not present in the generic query index
+      if (metric === 'short-term-holders-realized-price') {
+        console.warn(`Fallback fetch for ${metric}`);
+        // 1) fetch values from specific endpoint
+        const valRes = await fetch(`${apiBaseUrl}/api/vecs/dateindex-to-short-term-holders-realized-price`);
+        if (!valRes.ok) throw new Error(`Failed fallback values for ${metric}: ${valRes.status}`);
+        const values: number[] = await valRes.json();
+        // 2) fetch dates using a reliable series (date,close)
+        const dateRes = await fetch(`${apiBaseUrl}/api/vecs/query?index=dateindex&ids=date,close&format=json`);
+        if (!dateRes.ok) throw new Error(`Failed fallback dates for ${metric}: ${dateRes.status}`);
+        const dateData = await dateRes.json();
+        const dates: string[] = Array.isArray(dateData) && dateData.length >= 1 ? dateData[0] : [];
+        // Align lengths conservatively
+        const len = Math.min(dates.length, values.length);
+        return { metric, dates: dates.slice(0, len), values: values.slice(0, len) };
+      }
+      throw new Error(`Failed to fetch ${metric}: ${String(err)}`);
     }
-    
-    const data = await response.json();
-    if (!Array.isArray(data) || data.length < 2) {
-      throw new Error(`Invalid data format for ${metric}`);
-    }
-    
-    const [dates, values] = data;
-    return { metric, dates, values };
   });
 
   const results = await Promise.all(promises);
