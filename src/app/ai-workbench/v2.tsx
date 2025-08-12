@@ -127,6 +127,12 @@ export default function AIWorkbenchV2() {
   const { leftAxisMetrics, rightAxisMetrics } = getAxisAssignment(selectedMetricKeys);
   const hasLeftAxis = leftAxisMetrics.length > 0;
   const hasRightAxis = rightAxisMetrics.length > 0;
+  const leftAxisIsUSD = useMemo(() => {
+    return leftAxisMetrics.some((m) =>
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      METRIC_SCALE_TYPES.USD_LARGE.includes(m as any) || METRIC_SCALE_TYPES.USD_PRICE.includes(m as any)
+    );
+  }, [leftAxisMetrics]);
 
   useEffect(() => {
     setLoading(true);
@@ -240,10 +246,10 @@ export default function AIWorkbenchV2() {
       margin: { l: 80, r: 80, t: 20, b: 40 },
       showlegend: false,
     };
-    if (hasLeftAxis) base.yaxis = { title: 'USD Value (log2)', type: 'log', side: 'left', color: 'white', gridcolor: 'rgba(55,65,81,0.3)', showgrid: true, showline: false, zeroline: false, tickformat: '.2s', showticklabels: true, tickmode: 'auto', nticks: 8, tickfont: { color: 'white', size: 10 } };
+    if (hasLeftAxis) base.yaxis = { title: 'USD Value (log2)', type: 'log', side: 'left', color: 'white', gridcolor: 'rgba(55,65,81,0.3)', showgrid: true, showline: false, zeroline: false, tickformat: '.2s', tickprefix: leftAxisIsUSD ? '$' : undefined, showticklabels: true, tickmode: 'auto', nticks: 8, tickfont: { color: 'white', size: 10 } };
     if (hasRightAxis) base.yaxis2 = { title: 'Ratio / Z (linear)', type: 'linear', side: 'right', color: 'white', gridcolor: 'rgba(55,65,81,0.3)', showgrid: true, showline: false, zeroline: false, tickformat: '.2f', showticklabels: true, tickmode: 'auto', nticks: 8, tickfont: { color: 'white', size: 10 }, overlaying: hasLeftAxis ? 'y' : undefined };
     return base;
-  }, [hasLeftAxis, hasRightAxis]);
+  }, [hasLeftAxis, hasRightAxis, leftAxisIsUSD]);
 
   const captureChartScreenshot = async (): Promise<string> => {
     const el = document.getElementById('ai-workbench-plot-v2');
