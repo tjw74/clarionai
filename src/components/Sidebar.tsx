@@ -6,13 +6,21 @@ import { Home, Bot, TrendingUp, BarChart3, DollarSign, Activity } from "lucide-r
 
 export default function Sidebar() {
   const [open, setOpen] = useState(true);
+  const notifyResize = () => {
+    if (typeof window === 'undefined') return;
+    // Fire after layout update so Plotly's useResizeHandler picks it up
+    requestAnimationFrame(() => {
+      window.dispatchEvent(new Event('resize'));
+      requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
+    });
+  };
 
   // When closed, only show the open arrow button floating at the left edge
   if (!open) {
     return (
       <button
         className="fixed top-1/2 -translate-y-1/2 left-0 z-50 w-8 h-8 flex items-center justify-center bg-black border border-white/20 rounded-full text-white hover:bg-white/10 shadow-lg"
-        onClick={() => setOpen(true)}
+        onClick={() => { setOpen(true); notifyResize(); }}
         aria-label="Open sidebar"
         type="button"
       >
@@ -26,7 +34,7 @@ export default function Sidebar() {
       {/* Collapse button */}
       <button
         className="absolute -right-4 top-1/2 -translate-y-1/2 z-50 w-8 h-8 flex items-center justify-center bg-black border border-white/20 rounded-full text-white hover:bg-white/10"
-        onClick={() => setOpen(false)}
+        onClick={() => { setOpen(false); notifyResize(); }}
         aria-label="Collapse sidebar"
         type="button"
       >

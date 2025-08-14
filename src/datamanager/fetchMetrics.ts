@@ -48,13 +48,30 @@ export async function fetchAllMetrics(apiBaseUrl: string = DEFAULT_API_BASE): Pr
   });
 
   const results = await Promise.all(promises);
-  
-  // All metrics should have the same dates due to dateindex alignment
-  const dates = results[0]?.dates || [];
+
+  // Choose canonical date axis from `close` if present, otherwise first result
+  const closeEntry = results.find(r => r.metric === 'close');
+  const dates = closeEntry?.dates || results[0]?.dates || [];
+
+  const targetLen = dates.length;
   const metrics: Record<string, number[]> = {};
-  
+
+  // Helper: align each metric's values to the canonical date length by
+  // left-padding with NaN when the series starts later, and truncating
+  // from the start when the series is longer.
+  const alignToLength = (values: number[], length: number): number[] => {
+    if (!Array.isArray(values)) return new Array(length).fill(NaN);
+    if (values.length === length) return values;
+    if (values.length < length) {
+      const pad = new Array(length - values.length).fill(NaN);
+      return [...pad, ...values];
+    }
+    // If longer, take the most recent `length` items to keep tail aligned
+    return values.slice(values.length - length);
+  };
+
   results.forEach(({ metric, values }) => {
-    metrics[metric] = values;
+    metrics[metric] = alignToLength(values, targetLen);
   });
   
   // Calculate derived metrics
