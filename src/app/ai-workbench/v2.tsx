@@ -98,35 +98,161 @@ export default function AIWorkbenchV2() {
   const selectedMetricKeys = getSelectedMetricKeys();
 
   const getAxisAssignment = useCallback((metrics: string[]) => {
-    const leftAxisMetrics: string[] = [];
-    const rightAxisMetrics: string[] = [];
+    // First, get the actual data ranges for scale conflict detection
+    if (!metricData || !sliderRange) {
+      // Fallback to simple left/right assignment if no data available
+      const leftAxisMetrics: string[] = [];
+      const rightAxisMetrics: string[] = [];
+      metrics.forEach((metric) => {
+        if (metric === 'marketcap' || metric === 'realized-cap') {
+          leftAxisMetrics.push(metric);
+        } else if (metric === 'mvrv-ratio') {
+          rightAxisMetrics.push(metric);
+        } else if (METRIC_SCALE_TYPES.USD_LARGE.includes(metric as any)) {
+          leftAxisMetrics.push(metric);
+        } else if (METRIC_SCALE_TYPES.USD_PRICE.includes(metric as any)) {
+          leftAxisMetrics.push(metric);
+        } else if (METRIC_SCALE_TYPES.RATIO.includes(metric as any)) {
+          rightAxisMetrics.push(metric);
+        } else if (metric.endsWith('_z')) {
+          rightAxisMetrics.push(metric);
+        } else if (METRIC_SCALE_TYPES.PERCENTAGE.includes(metric as any)) {
+          rightAxisMetrics.push(metric);
+        } else if (METRIC_SCALE_TYPES.COUNT.includes(metric as any)) {
+          leftAxisMetrics.push(metric);
+        } else {
+          leftAxisMetrics.push(metric);
+        }
+      });
+      return { leftAxisMetrics, rightAxisMetrics, axisGroups: [] };
+    }
+
+    const [start, end] = sliderRange;
+    const axisGroups: Array<{ axisId: string; metrics: string[]; side: 'left' | 'right'; scale: 'log' | 'linear'; range: { min: number; max: number } }> = [];
+    
+    // Analyze data ranges for each metric
+    const metricRanges: Array<{ metric: string; range: { min: number; max: number }; scale: 'log' | 'linear' }> = [];
+    
     metrics.forEach((metric) => {
-      if (metric === 'marketcap' || metric === 'realized-cap') {
-        leftAxisMetrics.push(metric);
-      } else if (metric === 'mvrv-ratio') {
-        rightAxisMetrics.push(metric);
-      } else if (METRIC_SCALE_TYPES.USD_LARGE.includes(metric as any)) {
-        leftAxisMetrics.push(metric);
-      } else if (METRIC_SCALE_TYPES.USD_PRICE.includes(metric as any)) {
-        leftAxisMetrics.push(metric);
-      } else if (METRIC_SCALE_TYPES.RATIO.includes(metric as any)) {
-        rightAxisMetrics.push(metric);
-      } else if (metric.endsWith('_z')) {
-        rightAxisMetrics.push(metric);
-      } else if (METRIC_SCALE_TYPES.PERCENTAGE.includes(metric as any)) {
-        rightAxisMetrics.push(metric);
-      } else if (METRIC_SCALE_TYPES.COUNT.includes(metric as any)) {
-        leftAxisMetrics.push(metric);
-      } else {
-        leftAxisMetrics.push(metric);
+      const data = metricData.metrics[metric];
+      if (!data || data.length === 0) return;
+      
+      const slicedData = data.slice(start, end + 1).filter(v => typeof v === 'number' && !isNaN(v));
+      if (slicedData.length === 0) return;
+      
+      const min = Math.min(...slicedData);
+      const max = Math.max(...slicedData);
+      const range = max - min;
+      
+      // Determine appropriate scale type
+      let scale: 'log' | 'linear' = 'linear';
+      if (METRIC_SCALE_TYPES.USD_LARGE.includes(metric as any) || 
+          METRIC_SCALE_TYPES.USD_PRICE.includes(metric as any) ||
+          METRIC_SCALE_TYPES.COUNT.includes(metric as any)) {
+        scale = 'log';
+      }
+      
+      metricRanges.push({ metric, range: { min, max }, scale });
+    });
+    
+    // Sort metrics by their range magnitude (log scale for better comparison)
+    metricRanges.sort((a, b) => {
+      const aMagnitude = Math.log10(a.range.max / Math.max(a.range.min, 1e-10));
+      const bMagnitude = Math.log10(b.range.max / Math.max(b.range.min, 1e-10));
+      return bMagnitude - aMagnitude;
+    });
+    
+    // Group metrics by scale compatibility
+    const usedRanges: Array<{ min: number; max: number; scale: 'log' | 'linear' }> = [];
+    
+    metricRanges.forEach(({ metric, range, scale }) => {
+      // Check if this metric can share an axis with existing groups
+      let assigned = false;
+      
+      for (let i = 0; i < axisGroups.length; i++) {
+        const group = axisGroups[i];
+        if (group.scale !== scale) continue;
+        
+        // Check if ranges are compatible (within reasonable overlap)
+        const groupRange = group.range;
+        const combinedMin = Math.min(groupRange.min, range.min);
+        const combinedMax = Math.max(groupRange.max, range.max);
+        
+        // For log scale, check if the ratio of max/min is reasonable
+        if (scale === 'log') {
+          const ratio = combinedMax / Math.max(combinedMin, 1e-10);
+          if (ratio <= 1e6) { // Allow up to 6 orders of magnitude
+            group.metrics.push(metric);
+            group.range = { min: combinedMin, max: combinedMax };
+            assigned = true;
+            break;
+          }
+        } else {
+          // For linear scale, check if the absolute difference is reasonable
+          const rangeDiff = combinedMax - combinedMin;
+          const individualRange = range.max - range.min;
+          if (rangeDiff <= individualRange * 100) { // Allow up to 100x range difference
+            group.metrics.push(metric);
+            group.range = { min: combinedMin, max: combinedMax };
+            assigned = true;
+            break;
+          }
+        }
+        
+        // Additional check: if one metric is much larger than the other, separate them
+        const groupMagnitude = Math.log10(groupRange.max / Math.max(groupRange.min, 1e-10));
+        const metricMagnitude = Math.log10(range.max / Math.max(range.min, 1e-10));
+        if (Math.abs(groupMagnitude - metricMagnitude) > 3) { // More than 3 orders of magnitude difference
+          continue; // Don't group these metrics together
+        }
+      }
+      
+      // If no compatible group found, create a new one
+      if (!assigned) {
+        const axisId = `y${axisGroups.length + 1}`;
+        const side: 'left' | 'right' = axisGroups.length % 2 === 0 ? 'left' : 'right';
+        axisGroups.push({
+          axisId,
+          metrics: [metric],
+          side,
+          scale,
+          range
+        });
       }
     });
-    return { leftAxisMetrics, rightAxisMetrics };
-  }, []);
+    
+    // Convert to the expected format for backward compatibility
+    const leftAxisMetrics: string[] = [];
+    const rightAxisMetrics: string[] = [];
+    
+    axisGroups.forEach((group) => {
+      if (group.side === 'left') {
+        leftAxisMetrics.push(...group.metrics);
+      } else {
+        rightAxisMetrics.push(...group.metrics);
+      }
+    });
+    
+    return { leftAxisMetrics, rightAxisMetrics, axisGroups };
+  }, [metricData, sliderRange]);
 
-  const { leftAxisMetrics, rightAxisMetrics } = getAxisAssignment(selectedMetricKeys);
+  const { leftAxisMetrics, rightAxisMetrics, axisGroups } = getAxisAssignment(selectedMetricKeys);
   const hasLeftAxis = leftAxisMetrics.length > 0;
   const hasRightAxis = rightAxisMetrics.length > 0;
+  
+  // Debug logging for axis assignment
+  console.log('Axis Assignment Debug:', {
+    selectedMetricKeys,
+    leftAxisMetrics,
+    rightAxisMetrics,
+    axisGroups: axisGroups?.map(g => ({
+      axisId: g.axisId,
+      metrics: g.metrics,
+      side: g.side,
+      scale: g.scale,
+      range: g.range
+    }))
+  });
   const leftAxisIsUSD = useMemo(() => {
     return leftAxisMetrics.some((m) =>
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -220,6 +346,7 @@ export default function AIWorkbenchV2() {
     if (!processedData) return [] as any[];
     const { x, zScores, slicedMetrics } = processedData;
     const traces: any[] = [];
+    
     selectedMetricKeys.forEach((key) => {
       let config = METRIC_GROUPS.flatMap((g) => g.metrics).find((m) => m?.key === key);
       if (!config) {
@@ -227,14 +354,38 @@ export default function AIWorkbenchV2() {
         if (name) config = { key, name, color: '#33B1FF', yaxis: 'y', zScore: false } as any;
       }
       if (!config) return;
-      const isRight = rightAxisMetrics.includes(key);
-      traces.push({ x, y: slicedMetrics[key], name: config.name, type: 'scatter', mode: 'lines', line: { color: config.color, width: 1 }, yaxis: isRight ? 'y2' : 'y', visible: hiddenTraces.has(config.name) ? 'legendonly' : true, connectgaps: false });
+      
+      // Find which axis group this metric belongs to
+      const axisGroup = axisGroups.find(group => group.metrics.includes(key));
+      const yaxis = axisGroup ? axisGroup.axisId : (rightAxisMetrics.includes(key) ? 'y2' : 'y');
+      
+      traces.push({ 
+        x, 
+        y: slicedMetrics[key], 
+        name: config.name, 
+        type: 'scatter', 
+        mode: 'lines', 
+        line: { color: config.color, width: 1 }, 
+        yaxis, 
+        visible: hiddenTraces.has(config.name) ? 'legendonly' : true, 
+        connectgaps: false 
+      });
+      
       if (config.zScore && zScores[key]) {
-        traces.push({ x, y: zScores[key], name: `${config.name} Z`, type: 'scatter', mode: 'lines', line: { color: config.color, width: 1 }, yaxis: 'y2', visible: hiddenTraces.has(`${config.name} Z`) ? 'legendonly' : true });
+        traces.push({ 
+          x, 
+          y: zScores[key], 
+          name: `${config.name} Z`, 
+          type: 'scatter', 
+          mode: 'lines', 
+          line: { color: config.color, width: 1 }, 
+          yaxis: 'y2', // Z-scores always go on the right axis
+          visible: hiddenTraces.has(`${config.name} Z`) ? 'legendonly' : true 
+        });
       }
     });
     return traces;
-  }, [processedData, selectedMetricKeys, hiddenTraces, rightAxisMetrics]);
+  }, [processedData, selectedMetricKeys, hiddenTraces, rightAxisMetrics, axisGroups]);
 
   const chartLayout = useMemo(() => {
     const base: any = {
@@ -246,10 +397,68 @@ export default function AIWorkbenchV2() {
       margin: { l: 80, r: 80, t: 20, b: 40 },
       showlegend: false,
     };
-    if (hasLeftAxis) base.yaxis = { title: 'USD Value (log2)', type: 'log', side: 'left', color: 'white', gridcolor: 'rgba(55,65,81,0.3)', showgrid: true, showline: false, zeroline: false, tickformat: '.2s', tickprefix: leftAxisIsUSD ? '$' : undefined, showticklabels: true, tickmode: 'auto', nticks: 8, tickfont: { color: 'white', size: 10 } };
-    if (hasRightAxis) base.yaxis2 = { title: 'Ratio / Z (linear)', type: 'linear', side: 'right', color: 'white', gridcolor: 'rgba(55,65,81,0.3)', showgrid: true, showline: false, zeroline: false, tickformat: '.2f', showticklabels: true, tickmode: 'auto', nticks: 8, tickfont: { color: 'white', size: 10 }, overlaying: hasLeftAxis ? 'y' : undefined };
+    
+    // Dynamically create axes based on axis groups
+    if (axisGroups && axisGroups.length > 0) {
+      axisGroups.forEach((group, index) => {
+        const axisConfig: any = {
+          title: `${group.metrics.length > 1 ? 'Multiple Metrics' : METRIC_DISPLAY_NAMES[group.metrics[0]] || group.metrics[0]}`,
+          type: group.scale,
+          side: group.side,
+          color: 'white',
+          gridcolor: 'rgba(55,65,81,0.3)',
+          showgrid: true,
+          showline: false,
+          zeroline: false,
+          showticklabels: true,
+          tickmode: 'auto',
+          nticks: 8,
+          tickfont: { color: 'white', size: 10 }
+        };
+        
+        // Configure axis-specific properties
+        if (group.scale === 'log') {
+          axisConfig.tickformat = '.2s';
+          if (group.metrics.some(m => METRIC_SCALE_TYPES.USD_LARGE.includes(m as any) || METRIC_SCALE_TYPES.USD_PRICE.includes(m as any))) {
+            axisConfig.tickprefix = '$';
+          }
+        } else {
+          axisConfig.tickformat = '.2f';
+        }
+        
+        // Position axes to avoid overlap
+        if (index === 0) {
+          // First axis (y) - no overlay
+          base.yaxis = axisConfig;
+        } else if (index === 1) {
+          // Second axis (y2) - overlay on first
+          axisConfig.overlaying = 'y';
+          base.yaxis2 = axisConfig;
+        } else {
+          // Additional axes - create separate axes with proper positioning
+          axisConfig.overlaying = 'y';
+          axisConfig.anchor = 'free';
+          
+          // Calculate position to avoid overlap
+          if (group.side === 'left') {
+            axisConfig.position = 0.05 - (index * 0.02);
+            axisConfig.side = 'left';
+          } else {
+            axisConfig.position = 0.95 + (index * 0.02);
+            axisConfig.side = 'right';
+          }
+          
+          base[group.axisId] = axisConfig;
+        }
+      });
+    } else {
+      // Fallback to original logic for backward compatibility
+      if (hasLeftAxis) base.yaxis = { title: 'USD Value (log2)', type: 'log', side: 'left', color: 'white', gridcolor: 'rgba(55,65,81,0.3)', showgrid: true, showline: false, zeroline: false, tickformat: '.2s', tickprefix: leftAxisIsUSD ? '$' : undefined, showticklabels: true, tickmode: 'auto', nticks: 8, tickfont: { color: 'white', size: 10 } };
+      if (hasRightAxis) base.yaxis2 = { title: 'Ratio / Z (linear)', type: 'linear', side: 'right', color: 'white', gridcolor: 'rgba(55,65,81,0.3)', showgrid: true, showline: false, zeroline: false, tickformat: '.2f', showticklabels: true, tickmode: 'auto', nticks: 8, tickfont: { color: 'white', size: 10 }, overlaying: hasLeftAxis ? 'y' : undefined };
+    }
+    
     return base;
-  }, [hasLeftAxis, hasRightAxis, leftAxisIsUSD]);
+  }, [axisGroups, hasLeftAxis, hasRightAxis, leftAxisIsUSD]);
 
   const captureChartScreenshot = async (): Promise<string> => {
     const el = document.getElementById('ai-workbench-plot-v2');
