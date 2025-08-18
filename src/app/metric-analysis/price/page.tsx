@@ -5,6 +5,7 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/componen
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, Minus, BarChart3, Activity, Target } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import * as Slider from '@radix-ui/react-slider';
 
 // Dynamically import Plotly to avoid SSR issues
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
@@ -19,42 +20,9 @@ export default function PriceAnalysis() {
     trueMarketMean?: number[];
     vaultedPrice?: number[];
   } | null>(null);
-  const [panelSize, setPanelSize] = useState({ width: 800, height: 500 });
-
-  // Resize functionality
-  useEffect(() => {
-    const handleMouseDown = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest('.cursor-se-resize')) return;
-
-      e.preventDefault();
-      const startX = e.clientX;
-      const startY = e.clientY;
-      const startWidth = panelSize.width;
-      const startHeight = panelSize.height;
-
-      const handleMouseMove = (e: MouseEvent) => {
-        const deltaX = e.clientX - startX;
-        const deltaY = e.clientY - startY;
-        
-        setPanelSize({
-          width: Math.max(600, startWidth + deltaX),
-          height: Math.max(400, startHeight + deltaY)
-        });
-      };
-
-      const handleMouseUp = () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-      };
-
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-    };
-
-    document.addEventListener('mousedown', handleMouseDown);
-    return () => document.removeEventListener('mousedown', handleMouseDown);
-  }, [panelSize.width, panelSize.height]);
+  
+  // Dashboard time range (default for all panels)
+  const [dashboardTimeRange, setDashboardTimeRange] = useState<[number, number] | null>(null);
 
   // Fetch price data
   useEffect(() => {
@@ -83,6 +51,9 @@ export default function PriceAnalysis() {
           vaultedPrice
         });
         
+        // Initialize dashboard time range to last 8 years
+        setDashboardTimeRange([Math.max(0, dates.length - 2920), dates.length - 1]);
+        
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch price data');
       } finally {
@@ -93,14 +64,30 @@ export default function PriceAnalysis() {
     fetchPriceData();
   }, []);
 
+  // Handle dashboard time range change
+  const handleDashboardTimeChange = (newRange: [number, number]) => {
+    setDashboardTimeRange(newRange);
+  };
+
+  // Get effective time range for the chart
+  const effectiveTimeRange = dashboardTimeRange;
+
   // Memoized chart data for price chart
   const priceChartData = useMemo(() => {
-    if (!priceData) return [];
+    if (!priceData || !effectiveTimeRange) return [];
+
+    const [start, end] = effectiveTimeRange;
+    
+    const dates = priceData.dates.slice(start, end + 1);
+    const prices = priceData.prices.slice(start, end + 1);
+    const realizedPrice = priceData.realizedPrice?.slice(start, end + 1);
+    const trueMarketMean = priceData.trueMarketMean?.slice(start, end + 1);
+    const vaultedPrice = priceData.vaultedPrice?.slice(start, end + 1);
 
     return [
       {
-        x: priceData.dates,
-        y: priceData.prices,
+        x: dates,
+        y: prices,
         type: 'scatter',
         mode: 'lines',
         name: 'Bitcoin Price',
@@ -121,8 +108,8 @@ export default function PriceAnalysis() {
         }
       },
       {
-        x: priceData.dates,
-        y: priceData.realizedPrice,
+        x: dates,
+        y: realizedPrice,
         type: 'scatter',
         mode: 'lines',
         name: 'Realized Price',
@@ -143,8 +130,8 @@ export default function PriceAnalysis() {
         }
       },
       {
-        x: priceData.dates,
-        y: priceData.trueMarketMean,
+        x: dates,
+        y: trueMarketMean,
         type: 'scatter',
         mode: 'lines',
         name: 'True Market Mean',
@@ -165,8 +152,8 @@ export default function PriceAnalysis() {
         }
       },
       {
-        x: priceData.dates,
-        y: priceData.vaultedPrice,
+        x: dates,
+        y: vaultedPrice,
         type: 'scatter',
         mode: 'lines',
         name: 'Vaulted Price',
@@ -187,89 +174,99 @@ export default function PriceAnalysis() {
         }
       }
     ];
-  }, [priceData]);
+  }, [priceData, effectiveTimeRange]);
 
   // Memoized chart layout
-  const priceChartLayout = useMemo(() => ({
-    plot_bgcolor: 'rgba(0,0,0,0)',
-    paper_bgcolor: 'rgba(0,0,0,0)',
-    font: { 
-      color: '#FFFFFF',
-      family: 'Inter, system-ui, sans-serif'
-    },
-    xaxis: {
-      title: {
-        text: '',
-        font: { color: '#FFFFFF', size: 14 }
-      },
-      gridcolor: 'rgba(55, 65, 81, 0.3)',
-      zerolinecolor: 'rgba(55, 65, 81, 0.3)',
-      showgrid: true,
-      gridwidth: 0.5,
-      tickfont: { color: '#FFFFFF', size: 12 },
-      titlefont: { color: '#FFFFFF', size: 14 },
-      type: 'date',
-      tickformat: '%b %Y',
-      tickangle: 0,
-      showline: true,
-      linecolor: '#374151',
-      linewidth: 1
-    },
-    yaxis: {
-      title: {
-        text: '',
-        font: { color: '#FFFFFF', size: 14 }
-      },
-      type: 'log',
-      gridcolor: 'rgba(55, 65, 81, 0.3)',
-      zerolinecolor: 'rgba(55, 65, 81, 0.3)',
-      showgrid: true,
-      gridwidth: 0.5,
-      tickfont: { color: '#FFFFFF', size: 12 },
-      titlefont: { color: '#FFFFFF', size: 14 },
-      tickformat: ',.0s',
-      tickprefix: '$',
-      showline: true,
-      linecolor: '#374151',
-      linewidth: 1,
-      side: 'right',
-      // Log base 2 configuration
-      dtick: 'L2',
-      tickmode: 'auto',
-      nticks: 8,
-      // Set range to include full price range including $120k+ peak
-      range: [Math.log10(0.01), Math.log10(200000)]
-    },
-    showlegend: true,
-    legend: {
-      x: 0,
-      y: 1.02,
-      xanchor: 'left',
-      yanchor: 'bottom',
-      orientation: 'h',
-      font: { color: '#FFFFFF', size: 14 },
-      bgcolor: 'rgba(0,0,0,0)',
-      bordercolor: 'rgba(0,0,0,0)',
-      itemwidth: 20
-    },
-    margin: { 
-      l: 80, 
-      r: 80, 
-      t: 80, 
-      b: 60 
-    },
-    hovermode: 'closest',
-    hoverdistance: 100,
-    xaxis_rangeslider_visible: false,
-
-    // Responsive design
-    autosize: true,
-    // Smooth animations
-    transition: {
-      duration: 300,
-      easing: 'cubic-in-out'
+  const priceChartLayout = useMemo(() => {
+    // Get the date range for the current slider selection
+    let xaxisRange = undefined;
+    
+    if (priceData && effectiveTimeRange) {
+      const [start, end] = effectiveTimeRange;
+      const startDate = priceData.dates[start];
+      const endDate = priceData.dates[end];
+      xaxisRange = [startDate, endDate];
     }
-  }), []);
+
+    return {
+      plot_bgcolor: 'rgba(0,0,0,0)',
+      paper_bgcolor: 'rgba(0,0,0,0)',
+      font: { 
+        color: '#FFFFFF',
+        family: 'Inter, system-ui, sans-serif'
+      },
+      xaxis: {
+        title: {
+          text: '',
+          font: { color: '#FFFFFF', size: 14 }
+        },
+        gridcolor: 'rgba(55, 65, 81, 0.3)',
+        zerolinecolor: 'rgba(55, 65, 81, 0.3)',
+        showgrid: true,
+        gridwidth: 0.5,
+        tickfont: { color: '#FFFFFF', size: 12 },
+        titlefont: { color: '#FFFFFF', size: 14 },
+        type: 'date',
+        tickformat: '%b %Y',
+        tickangle: 0,
+        showline: true,
+        linecolor: '#374151',
+        linewidth: 1,
+        range: xaxisRange
+      },
+      yaxis: {
+        title: {
+          text: '',
+          font: { color: '#FFFFFF', size: 14 }
+        },
+        type: 'log',
+        gridcolor: 'rgba(55, 65, 81, 0.3)',
+        zerolinecolor: 'rgba(55, 65, 81, 0.3)',
+        showgrid: true,
+        gridwidth: 0.5,
+        tickfont: { color: '#FFFFFF', size: 12 },
+        titlefont: { color: '#FFFFFF', size: 14 },
+        tickformat: ',.0s',
+        tickprefix: '$',
+        showline: true,
+        linecolor: '#374151',
+        linewidth: 1,
+        side: 'right',
+        autorange: true,
+        tickmode: 'auto',
+        nticks: 8
+      },
+      showlegend: true,
+      legend: {
+        x: 0,
+        y: 1.02,
+        xanchor: 'left',
+        yanchor: 'bottom',
+        orientation: 'h',
+        font: { color: '#FFFFFF', size: 14 },
+        bgcolor: 'rgba(0,0,0,0)',
+        bordercolor: 'rgba(0,0,0,0)',
+        itemwidth: 20
+      },
+      margin: { 
+        l: 80, 
+        r: 80, 
+        t: 80, 
+        b: 60 
+      },
+      hovermode: 'closest',
+      hoverdistance: 100,
+      xaxis_rangeslider_visible: false,
+
+      // Responsive design
+      autosize: true,
+      // Smooth animations
+      transition: {
+        duration: 300,
+        easing: 'cubic-in-out'
+      }
+    };
+  }, [priceData, effectiveTimeRange]);
 
   if (loading) {
     return (
@@ -303,44 +300,51 @@ export default function PriceAnalysis() {
         <h1 className="text-3xl font-bold">Price Analysis</h1>
       </header>
 
-            <div className="flex-1 p-6">
-        <div className="grid grid-cols-1 gap-6 h-full">
-          {/* Price Chart Panel - Grafana Style Resizable */}
-          <div 
-            className="relative bg-slate-950 border border-slate-800 rounded-lg" 
-            style={{ 
-              width: `${panelSize.width}px`, 
-              height: `${panelSize.height}px`,
-              minHeight: '400px', 
-              minWidth: '600px' 
-            }}
-          >
-            {/* Resize Handle - Bottom Right */}
-            <div className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
-              <div className="w-full h-full flex items-end justify-end">
-                <div className="w-3 h-3 bg-slate-600 rounded-sm opacity-50 hover:opacity-100 transition-opacity"></div>
-              </div>
-            </div>
-            
+      <div className="flex-1 p-6">
+        <div className="h-full w-full">
+          {/* Price Chart Panel - Full Page */}
+          <div className="relative bg-slate-950 border border-slate-800 rounded-lg h-[calc(100vh-8rem)] w-full">
             {/* Chart Container */}
-            <div className="h-full w-full p-4 relative">
-              <Plot
-                data={priceChartData}
-                layout={{
-                  ...priceChartLayout,
-                  autosize: true,
-                  width: undefined,
-                  height: undefined
-                }}
-                config={{ 
-                  responsive: true, 
-                  displayModeBar: false,
-                  displaylogo: false
-                }}
-                style={{ width: '100%', height: '100%' }}
-                useResizeHandler={true}
-              />
-
+            <div className="h-full w-full p-4 flex flex-col">
+              <div className="flex-1 relative">
+                <Plot
+                  data={priceChartData}
+                  layout={{
+                    ...priceChartLayout,
+                    autosize: true,
+                    width: undefined,
+                    height: undefined
+                  }}
+                  config={{ 
+                    responsive: true, 
+                    displayModeBar: false,
+                    displaylogo: false
+                  }}
+                  style={{ width: '100%', height: '100%' }}
+                  useResizeHandler={true}
+                />
+              </div>
+              
+              {/* Time range slider at bottom */}
+              {priceData && effectiveTimeRange && (
+                <div className="w-full flex justify-center items-center mt-4">
+                  <Slider.Root
+                    className="relative w-full max-w-2xl h-6 flex items-center"
+                    min={0}
+                    max={priceData.dates.length - 1}
+                    step={1}
+                    value={effectiveTimeRange}
+                    onValueChange={([start, end]) => handleDashboardTimeChange([start, end])}
+                    minStepsBetweenThumbs={1}
+                  >
+                    <Slider.Track className="bg-[#444a] h-[3px] w-full rounded-full">
+                      <Slider.Range className="bg-transparent" />
+                    </Slider.Track>
+                    <Slider.Thumb className="block w-2 h-2 bg-white border-2 border-white rounded-full shadow" />
+                    <Slider.Thumb className="block w-2 h-2 bg-white border-2 border-white rounded-full shadow" />
+                  </Slider.Root>
+                </div>
+              )}
             </div>
           </div>
         </div>
