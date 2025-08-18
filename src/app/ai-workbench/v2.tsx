@@ -29,6 +29,45 @@ import { DefaultChatTransport } from 'ai';
 import { saveSecret, loadSecret, clearSecret } from '@/lib/vault';
 
 export default function AIWorkbenchV2() {
+  // Dynamic color generation functions
+  const generateAdaptiveColors = useCallback((selectedMetrics: string[]): Record<string, string> => {
+    const colors: Record<string, string> = {};
+    const totalMetrics = selectedMetrics.length;
+    
+    selectedMetrics.forEach((metricKey, index) => {
+      // Calculate optimal spacing between colors
+      const hueStep = 360 / totalMetrics;
+      const baseHue = (index * hueStep) % 360;
+      
+      // Ensure good contrast by varying saturation and lightness
+      const saturation = 70 + (index % 3) * 10; // 70%, 80%, 90%
+      const lightness = 50 + (index % 3) * 10;  // 50%, 60%, 70%
+      
+      // Add slight randomization for visual interest
+      const hueVariation = Math.random() * 20 - 10;
+      const finalHue = (baseHue + hueVariation + 360) % 360;
+      
+      colors[metricKey] = `hsl(${finalHue}, ${saturation}%, ${lightness}%)`;
+    });
+    
+    return colors;
+  }, []);
+
+  const modifyColorForZScore = useCallback((baseColor: string): string => {
+    // Convert HSL to modify lightness for Z-score traces
+    if (baseColor.startsWith('hsl(')) {
+      const match = baseColor.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+      if (match) {
+        const [, h, s, l] = match;
+        const newLightness = Math.min(parseInt(l) + 20, 90); // Lighter version
+        return `hsl(${h}, ${s}%, ${newLightness}%)`;
+      }
+    }
+    
+    // Fallback: add transparency for non-HSL colors
+    return baseColor + '80'; // 50% transparency
+  }, []);
+
   const [selectedGroups, setSelectedGroups] = useState<string[]>(['MVRV Ratio']);
   const [selectedIndividualMetrics, setSelectedIndividualMetrics] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
@@ -142,6 +181,15 @@ export default function AIWorkbenchV2() {
       
       const min = Math.min(...slicedData);
       const max = Math.max(...slicedData);
+      
+      // Skip metrics with invalid ranges
+      if (min === max || min <= 0 || max <= 0) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn(`Skipping metric ${metric} due to invalid range: min=${min}, max=${max}`);
+        }
+        return;
+      }
+      
       const range = max - min;
       
       // Determine appropriate scale type
@@ -240,19 +288,21 @@ export default function AIWorkbenchV2() {
   const hasLeftAxis = leftAxisMetrics.length > 0;
   const hasRightAxis = rightAxisMetrics.length > 0;
   
-  // Debug logging for axis assignment
-  console.log('Axis Assignment Debug:', {
-    selectedMetricKeys,
-    leftAxisMetrics,
-    rightAxisMetrics,
-    axisGroups: axisGroups?.map(g => ({
-      axisId: g.axisId,
-      metrics: g.metrics,
-      side: g.side,
-      scale: g.scale,
-      range: g.range
-    }))
-  });
+  // Debug logging for axis assignment (can be removed in production)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Axis Assignment Debug:', {
+      selectedMetricKeys,
+      leftAxisMetrics,
+      rightAxisMetrics,
+      axisGroups: axisGroups?.map(g => ({
+        axisId: g.axisId,
+        metrics: g.metrics,
+        side: g.side,
+        scale: g.scale,
+        range: g.range
+      }))
+    });
+  }
   const leftAxisIsUSD = useMemo(() => {
     return leftAxisMetrics.some((m) =>
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -347,13 +397,24 @@ export default function AIWorkbenchV2() {
     const { x, zScores, slicedMetrics } = processedData;
     const traces: any[] = [];
     
+    // Generate unique colors for current metric selection
+    const metricColors = generateAdaptiveColors(selectedMetricKeys);
+    
+    // Debug logging for color generation (can be removed in production)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Generated colors:', metricColors);
+    }
+    
     selectedMetricKeys.forEach((key) => {
       let config = METRIC_GROUPS.flatMap((g) => g.metrics).find((m) => m?.key === key);
       if (!config) {
         const name = METRIC_DISPLAY_NAMES[key];
-        if (name) config = { key, name, color: '#33B1FF', yaxis: 'y', zScore: false } as any;
+        if (name) config = { key, name, yaxis: 'y', zScore: false } as any;
       }
       if (!config) return;
+      
+      // Use dynamically generated color
+      const color = metricColors[key];
       
       // Find which axis group this metric belongs to
       const axisGroup = axisGroups.find(group => group.metrics.includes(key));
@@ -365,27 +426,29 @@ export default function AIWorkbenchV2() {
         name: config.name, 
         type: 'scatter', 
         mode: 'lines', 
-        line: { color: config.color, width: 1 }, 
+        line: { color, width: 1 }, 
         yaxis, 
         visible: hiddenTraces.has(config.name) ? 'legendonly' : true, 
         connectgaps: false 
       });
       
       if (config.zScore && zScores[key]) {
+        // Z-score traces get a modified version of the parent color
+        const zScoreColor = modifyColorForZScore(color);
         traces.push({ 
           x, 
           y: zScores[key], 
           name: `${config.name} Z`, 
           type: 'scatter', 
           mode: 'lines', 
-          line: { color: config.color, width: 1 }, 
+          line: { color: zScoreColor, width: 1 }, 
           yaxis: 'y2', // Z-scores always go on the right axis
           visible: hiddenTraces.has(`${config.name} Z`) ? 'legendonly' : true 
         });
       }
     });
     return traces;
-  }, [processedData, selectedMetricKeys, hiddenTraces, rightAxisMetrics, axisGroups]);
+  }, [processedData, selectedMetricKeys, hiddenTraces, rightAxisMetrics, axisGroups, generateAdaptiveColors, modifyColorForZScore]);
 
   const chartLayout = useMemo(() => {
     const base: any = {
