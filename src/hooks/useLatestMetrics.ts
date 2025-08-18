@@ -60,6 +60,8 @@ export interface LatestMetrics {
   realizedLossChange30d: number | null;
   realizedLossChange90d: number | null;
   realizedLossChange180d: number | null;
+  // ATH calculation
+  ath: number | null;
   loading: boolean;
   error: string | null;
 }
@@ -121,6 +123,7 @@ export function useLatestMetrics(): LatestMetrics {
     realizedLossChange30d: null,
     realizedLossChange90d: null,
     realizedLossChange180d: null,
+    ath: null,
     loading: true,
     error: null,
   });
@@ -259,6 +262,9 @@ export function useLatestMetrics(): LatestMetrics {
           return ((current - pastMvrv) / pastMvrv) * 100;
         };
 
+        // ATH calculation
+        const ath = data.metrics['high']?.reduce((max, current) => (current > max ? current : max), -Infinity) || null;
+
         setMetrics({
           price,
           priceSpark30,
@@ -315,6 +321,7 @@ export function useLatestMetrics(): LatestMetrics {
           realizedLossChange30d: calculateChange(realizedLoss, 30, 'negative-realized-loss'),
           realizedLossChange90d: calculateChange(realizedLoss, 90, 'negative-realized-loss'),
           realizedLossChange180d: calculateChange(realizedLoss, 180, 'negative-realized-loss'),
+          ath,
           loading: false,
           error: null,
         });

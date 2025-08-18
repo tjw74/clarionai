@@ -12,6 +12,7 @@ export const DCA_CONFIG = {
 
 export const METRICS_LIST = [
   'close',
+  'high',
   'realized-price',
   '200d-sma',
   'true-market-mean',
