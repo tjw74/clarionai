@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import Image from "next/image";
-import { Home, Bot, TrendingUp, BarChart3, DollarSign, Activity } from "lucide-react";
+import { Bot, TrendingUp, BarChart3, DollarSign, Activity } from "lucide-react";
 
 export default function Sidebar() {
   const [open, setOpen] = useState(true);
@@ -59,13 +59,7 @@ export default function Sidebar() {
       {/* Unified horizontal divider is rendered globally in layout */}
       {/* Navigation */}
       <nav className="flex flex-col gap-2 mt-8 px-4">
-        <Link
-          href="/"
-          className="flex items-center gap-3 px-3 py-2 rounded transition-colors border border-transparent hover:border-white/40 text-base"
-        >
-          <Home className="w-5 h-5" />
-          Dashboard
-        </Link>
+
         <Link
           href="/ai-workbench"
           className="flex items-center gap-3 px-3 py-2 rounded transition-colors border border-transparent hover:border-white/40 text-base"
