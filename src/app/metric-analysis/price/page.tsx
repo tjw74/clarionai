@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, Minus, BarChart3, Activity, Target } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import * as Slider from '@radix-ui/react-slider';
+import { fetchAllMetrics } from '@/datamanager';
+import { getApiUrl } from '@/lib/config';
 
 // Dynamically import Plotly to avoid SSR issues
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
@@ -31,7 +33,7 @@ export default function PriceAnalysis() {
         setLoading(true);
         setError(null);
 
-        const response = await fetch('https://bitcoinresearchkit.org/api/vecs/query?index=dateindex&ids=date,close,realized-price,true-market-mean,vaulted-price&format=json');
+        const response = await fetch(getApiUrl('/api/vecs/query?index=dateindex&ids=date,close,realized-price,true-market-mean,vaulted-price&format=json'));
         
         if (!response.ok) {
           throw new Error(`Failed to fetch price data: ${response.status}`);

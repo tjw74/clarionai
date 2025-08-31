@@ -1,20 +1,18 @@
-# Bitcoin Research Kit (BRK) API Guide
+# Bitcoin Research Kit API
 
-The Bitcoin Research Kit (BRK) API provides Bitcoin on-chain metrics with guaranteed time alignment. There are two interchangeable public endpoints:
+## Base URL
+- Default: https://bitview.space
 
-- Default: https://bitcoinresearchkit.org
-- Alternate: https://brk.openonchain.dev
+## Endpoints
 
-## Primary Endpoint: `/api/vecs/query`
-
-**For metrics + time data (recommended approach):**
-
+### Query Multiple Metrics
 ```bash
-# Get full history for multiple metrics with dates
-curl "https://bitcoinresearchkit.org/api/vecs/query?index=dateindex&ids=date,close,realized-price,marketcap&format=json"
+curl "https://bitview.space/api/vecs/query?index=dateindex&ids=date,close,realized-price,marketcap&format=json"
+```
 
-# Get last 100 days
-curl "https://bitcoinresearchkit.org/api/vecs/query?index=dateindex&ids=date,close,realized-price&from=-100&format=json"
+### Query with Date Range
+```bash
+curl "https://bitview.space/api/vecs/query?index=dateindex&ids=date,close,realized-price&from=-100&format=json"
 ```
 
 **Response format:**
@@ -34,30 +32,21 @@ curl "https://bitcoinresearchkit.org/api/vecs/query?index=dateindex&ids=date,clo
 - No `from` parameter = full history
 - Add any metrics to `ids=` comma-separated
 
-## Available Metrics
-
+### Get Available Metric IDs
 ```bash
-# List all available metrics
-curl "https://bitcoinresearchkit.org/api/vecs/ids"
+curl "https://bitview.space/api/vecs/ids"
 ```
 
 Common metrics: `close`, `realized-price`, `marketcap`, `realized-cap`, `200d-sma`, `true-market-mean`, `vaulted-price`, `liveliness`, etc.
 
-## Parameters
-
-- `index=dateindex` - Use date-based indexing
-- `ids=date,metric1,metric2` - Always include `date` first, then your metrics
-- `from=-N` - Get last N days (optional, omit for full history)
-- `format=json` - Response format (json, csv, tsv, md)
-
-## Legacy Endpoints (Individual Metrics)
-
+### Get Recent Data
 ```bash
-# Get single metric
-curl "https://bitcoinresearchkit.org/api/vecs/dateindex-to-close?from=-10"
+curl "https://bitview.space/api/vecs/dateindex-to-close?from=-10"
+```
 
-# Get dates separately  
-curl "https://bitcoinresearchkit.org/api/vecs/dateindex-to-date?from=-10"
+### Get Recent Dates
+```bash
+curl "https://bitview.space/api/vecs/dateindex-to-date?from=-10"
 ```
 
 **Note:** Use `/api/vecs/query` for multiple metrics to ensure perfect alignment. 

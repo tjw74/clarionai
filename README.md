@@ -1,5 +1,20 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Configuration
+
+### API Base URL
+
+The application connects to the Bitcoin Research Kit API. The default API base URL is `https://bitview.space`.
+
+To customize the API base URL, create a `.env.local` file in the root directory:
+
+```bash
+# .env.local
+NEXT_PUBLIC_API_BASE_URL=https://your-api-domain.com
+```
+
+**Note:** The `.env.local` file is ignored by git and should not be committed to version control.
+
 ## Getting Started
 
 First, run the development server:

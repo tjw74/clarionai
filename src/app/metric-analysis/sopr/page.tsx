@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
+import { getApiUrl } from '@/lib/config';
 
 // Dynamically import Plotly to avoid SSR issues
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
@@ -95,7 +96,7 @@ export default function SOPRAnalysis() {
         setLoading(true);
         setError(null);
 
-        const response = await fetch('https://bitcoinresearchkit.org/api/vecs/query?index=dateindex&ids=date,close,spent-output-profit-ratio,short-term-holders-adjusted-spent-output-profit-ratio,long-term-holders-spent-output-profit-ratio&format=json');
+        const response = await fetch(getApiUrl('/api/vecs/query?index=dateindex&ids=date,close,spent-output-profit-ratio,short-term-holders-adjusted-spent-output-profit-ratio,long-term-holders-spent-output-profit-ratio&format=json'));
         
         if (!response.ok) {
           throw new Error(`Failed to fetch price data: ${response.status}`);

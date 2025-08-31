@@ -2,8 +2,9 @@
 
 import { METRICS_LIST } from './metricsConfig';
 import { calculateDerivedMetrics } from './derivedMetrics';
+import { config } from '@/lib/config';
 
-const DEFAULT_API_BASE = "https://bitcoinresearchkit.org";
+const DEFAULT_API_BASE = config.api.baseUrl;
 
 // Simple interface for metric data with dates and values
 export interface MetricData {
