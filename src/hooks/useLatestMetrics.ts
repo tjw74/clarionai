@@ -141,7 +141,7 @@ export function useLatestMetrics(): LatestMetrics {
         const trueMarketMean = data.metrics['true-market-mean']?.[latestIndex] || null;
         const vaultedPrice = data.metrics['vaulted-price']?.[latestIndex] || null;
         const sma200 = data.metrics['200d-sma']?.[latestIndex] || null;
-        const marketCap = data.metrics['marketcap']?.[latestIndex] || null;
+        const marketCap = data.metrics['market_cap']?.[latestIndex] || null;
         const realizedCap = data.metrics['realized-cap']?.[latestIndex] || null;
         const unrealizedProfit = data.metrics['unrealized-profit']?.[latestIndex] || null;
         const unrealizedLoss = data.metrics['negative-unrealized-loss']?.[latestIndex] || null;
@@ -173,15 +173,15 @@ export function useLatestMetrics(): LatestMetrics {
 
         const window = 30;
         const priceSpark30 = computeSpark(data.metrics['close'] || [], window);
-        const marketCapSpark30 = computeSpark(data.metrics['marketcap'] || [], window);
+        const marketCapSpark30 = computeSpark(data.metrics['market_cap'] || [], window);
         const realizedCapSpark30 = computeSpark(data.metrics['realized-cap'] || [], window);
         const unrealizedProfitSpark30 = computeSpark(data.metrics['unrealized-profit'] || [], window);
         const unrealizedLossSpark30 = computeSpark(data.metrics['negative-unrealized-loss'] || [], window);
         const realizedProfitSpark30 = computeSpark(data.metrics['realized-profit'] || [], window);
         const realizedLossSpark30 = computeSpark(data.metrics['negative-realized-loss'] || [], window);
         const soprSpark30 = computeSpark(data.metrics['adjusted-spent-output-profit-ratio'] || [], window);
-        // MVRV spark uses derived series (marketcap / realized-cap)
-        const mcapSeries = data.metrics['marketcap'] || [];
+        // MVRV spark uses derived series (market_cap / realized-cap)
+        const mcapSeries = data.metrics['market_cap'] || [];
         const rcapSeries = data.metrics['realized-cap'] || [];
         const mvrvSeries: number[] = [];
         const len = Math.max(mcapSeries.length, rcapSeries.length);
@@ -255,7 +255,7 @@ export function useLatestMetrics(): LatestMetrics {
 
         const calculateMvrvChange = (current: number | null, daysAgo: number): number | null => {
           if (current === null || latestIndex < daysAgo) return null;
-          const pastMarketCap = data.metrics['marketcap']?.[latestIndex - daysAgo];
+          const pastMarketCap = data.metrics['market_cap']?.[latestIndex - daysAgo];
           const pastRealizedCap = data.metrics['realized-cap']?.[latestIndex - daysAgo];
           if (pastMarketCap === null || pastRealizedCap === null || pastRealizedCap <= 0) return null;
           const pastMvrv = pastMarketCap / pastRealizedCap;
@@ -300,9 +300,9 @@ export function useLatestMetrics(): LatestMetrics {
           priceChange30d: calculateChange(price, 30, 'close'),
           priceChange90d: calculateChange(price, 90, 'close'),
           priceChange180d: calculateChange(price, 180, 'close'),
-          marketCapChange30d: calculateChange(marketCap, 30, 'marketcap'),
-          marketCapChange90d: calculateChange(marketCap, 90, 'marketcap'),
-          marketCapChange180d: calculateChange(marketCap, 180, 'marketcap'),
+          marketCapChange30d: calculateChange(marketCap, 30, 'market_cap'),
+          marketCapChange90d: calculateChange(marketCap, 90, 'market_cap'),
+          marketCapChange180d: calculateChange(marketCap, 180, 'market_cap'),
           realizedCapChange30d: calculateChange(realizedCap, 30, 'realized-cap'),
           realizedCapChange90d: calculateChange(realizedCap, 90, 'realized-cap'),
           realizedCapChange180d: calculateChange(realizedCap, 180, 'realized-cap'),

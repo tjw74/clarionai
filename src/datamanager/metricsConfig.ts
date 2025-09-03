@@ -17,7 +17,7 @@ export const METRICS_LIST = [
   '200d-sma',
   'true-market-mean',
   'vaulted-price',
-  'marketcap',
+  'market_cap',
   'realized-cap',
   'adjusted-spent-output-profit-ratio',
   'sell-side-risk-ratio',
@@ -54,7 +54,7 @@ export const ALL_METRICS_LIST = [
 
 // Metric scale types for axis assignment
 export const METRIC_SCALE_TYPES = {
-  USD_LARGE: ['marketcap', 'realized-cap'], // Billions/Trillions - Log scale
+  USD_LARGE: ['market_cap', 'realized-cap'], // Billions/Trillions - Log scale
   USD_PRICE: ['close', 'realized-price', '200d-sma', 'true-market-mean', 'vaulted-price', 'short-term-holders-realized-price'], // Thousands - Log scale
   RATIO: ['mvrv-ratio', 'adjusted-spent-output-profit-ratio', 'sell-side-risk-ratio'], // 0-10 range - Linear scale
   Z_SCORE: ['*_z'], // -3 to +3 range - Linear scale
@@ -73,7 +73,7 @@ export const METRIC_DISPLAY_NAMES: Record<string, string> = {
   'short-term-holders-realized-price': 'STH Realized Price',
   
   // Market cap metrics
-  'marketcap': 'Market Cap',
+  'market_cap': 'Market Cap',
   'realized-cap': 'Network Realized Cap',
   
   // SOPR metrics
@@ -167,7 +167,7 @@ export const METRIC_GROUPS = [
     description: 'Market cap, realized cap, and their ratio',
     metrics: [
       {
-        key: 'marketcap',
+        key: 'market_cap',
         name: 'Market Cap',
         yaxis: 'y2',
         zScore: false,
@@ -195,12 +195,12 @@ export const DERIVED_METRICS = [
   {
     name: 'mvrv-ratio',
     formula: (metrics: Record<string, number[]>) => {
-      const mc = metrics['marketcap'];
+      const mc = metrics['market_cap'];
       const rc = metrics['realized-cap'];
       console.log('MVRV calculation inputs:', {
-        marketcap: mc ? mc.length : 0,
+        market_cap: mc ? mc.length : 0,
         realizedCap: rc ? rc.length : 0,
-        marketcapSample: mc ? mc.slice(0, 3) : [],
+        market_capSample: mc ? mc.slice(0, 3) : [],
         realizedCapSample: rc ? rc.slice(0, 3) : []
       });
       if (!mc || !rc || mc.length !== rc.length) {
@@ -281,7 +281,7 @@ export const METRIC_CORRELATION: Record<string, boolean> = {
   '200d-sma': true,
   'true-market-mean': true,
   'vaulted-price': true,
-  'marketcap': true,
+  'market_cap': true,
   'realized-cap': true,
   'adjusted-spent-output-profit-ratio': true,
   'short-term-holders-adjusted-spent-output-profit-ratio': true,

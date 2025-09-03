@@ -143,7 +143,7 @@ export default function AIWorkbenchV2() {
       const leftAxisMetrics: string[] = [];
       const rightAxisMetrics: string[] = [];
       metrics.forEach((metric) => {
-        if (metric === 'marketcap' || metric === 'realized-cap') {
+        if (metric === 'market_cap' || metric === 'realized-cap') {
           leftAxisMetrics.push(metric);
         } else if (metric === 'mvrv-ratio') {
           rightAxisMetrics.push(metric);
