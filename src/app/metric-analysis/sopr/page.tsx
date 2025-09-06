@@ -96,7 +96,7 @@ export default function SOPRAnalysis() {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(getApiUrl('/api/vecs/query?index=dateindex&ids=date,close,spent-output-profit-ratio,short-term-holders-adjusted-spent-output-profit-ratio,long-term-holders-spent-output-profit-ratio&format=json'));
+        const response = await fetch('/api/bitview?index=dateindex&ids=date,price_close,adjusted_sopr,sth_sopr,lth_sopr&format=json');
         
         if (!response.ok) {
           throw new Error(`Failed to fetch price data: ${response.status}`);

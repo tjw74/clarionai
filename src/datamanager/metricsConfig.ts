@@ -11,38 +11,38 @@ export const DCA_CONFIG = {
 } as const;
 
 export const METRICS_LIST = [
-  'close',
-  'high',
-  'realized-price',
-  '200d-sma',
-  'true-market-mean',
-  'vaulted-price',
+  'price_close',
+  'price_high',
+  'realized_price',
+  'price_200d_sma',
+  'true_market_mean',
+  'vaulted_price',
   'market_cap',
-  'realized-cap',
-  'adjusted-spent-output-profit-ratio',
-  'sell-side-risk-ratio',
+  'realized_cap',
+  'adjusted_sopr',
+  'sell_side_risk_ratio',
   'liveliness',
-  'short-term-holders-realized-price',
-  'short-term-holders-supply',
-  'short-term-holders-utxo-count',
-  'short-term-holders-realized-cap',
-  'short-term-holders-realized-price-ratio',
-  'short-term-holders-realized-profit',
-  'short-term-holders-negative-realized-loss',
-  'short-term-holders-adjusted-spent-output-profit-ratio',
-  'short-term-holders-unrealized-profit',
-  'short-term-holders-negative-unrealized-loss',
-  'short-term-holders-coinblocks-destroyed',
+  'sth_realized_price',
+  'sth_supply',
+  'sth_utxo_count',
+  'sth_realized_cap',
+  'sth_realized_price_ratio',
+  'sth_realized_profit',
+  'sth_neg_realized_loss',
+  'sth_sopr',
+  'sth_unrealized_profit',
+  'sth_neg_unrealized_loss',
+  'coinblocks_destroyed',
   // New comprehensive profit/loss metrics
-  'long-term-holders-adjusted-spent-output-profit-ratio',
-  'realized-profit',
-  'negative-realized-loss',
-  'net-realized-profit-and-loss',
-  'unrealized-profit',
-  'negative-unrealized-loss',
-  'net-unrealized-profit-and-loss',
-  'long-term-holders-realized-cap',
-  'mvrv-ratio',
+  'lth_sopr',
+  'realized_profit',
+  'neg_realized_loss',
+  'net_realized_pnl',
+  'unrealized_profit',
+  'neg_unrealized_loss',
+  'net_unrealized_pnl',
+  'lth_realized_cap',
+  'mvrv_ratio',
 ];
 
 // Create a combined list that includes both base and derived metrics
@@ -54,66 +54,66 @@ export const ALL_METRICS_LIST = [
 
 // Metric scale types for axis assignment
 export const METRIC_SCALE_TYPES = {
-  USD_LARGE: ['market_cap', 'realized-cap'], // Billions/Trillions - Log scale
-  USD_PRICE: ['close', 'realized-price', '200d-sma', 'true-market-mean', 'vaulted-price', 'short-term-holders-realized-price'], // Thousands - Log scale
-  RATIO: ['mvrv-ratio', 'adjusted-spent-output-profit-ratio', 'sell-side-risk-ratio'], // 0-10 range - Linear scale
+  USD_LARGE: ['market_cap', 'realized_cap'], // Billions/Trillions - Log scale
+  USD_PRICE: ['price_close', 'realized_price', 'price_200d_sma', 'true_market_mean', 'vaulted_price', 'sth_realized_price'], // Thousands - Log scale
+  RATIO: ['mvrv-ratio', 'adjusted_sopr', 'sell_side_risk_ratio'], // 0-10 range - Linear scale
   Z_SCORE: ['*_z'], // -3 to +3 range - Linear scale
   PERCENTAGE: ['liveliness'], // 0-100% - Linear scale
-  COUNT: ['short-term-holders-utxo-count'], // Large integers - Log scale
+  COUNT: ['sth_utxo_count'], // Large integers - Log scale
 } as const;
 
 // Complete mapping of metric keys to user-friendly display names
 export const METRIC_DISPLAY_NAMES: Record<string, string> = {
   // Price metrics
-  'close': 'Price',
-  'realized-price': 'Realized Price',
-  '200d-sma': '200d SMA',
-  'true-market-mean': 'True Market Mean',
-  'vaulted-price': 'Vaulted Price',
-  'short-term-holders-realized-price': 'STH Realized Price',
+  'price_close': 'Price',
+  'realized_price': 'Realized Price',
+  'price_200d_sma': '200d SMA',
+  'true_market_mean': 'True Market Mean',
+  'vaulted_price': 'Vaulted Price',
+  'sth_realized_price': 'STH Realized Price',
   
   // Market cap metrics
   'market_cap': 'Market Cap',
-  'realized-cap': 'Network Realized Cap',
+  'realized_cap': 'Network Realized Cap',
   
   // SOPR metrics
-  'adjusted-spent-output-profit-ratio': 'Network SOPR',
-  'short-term-holders-adjusted-spent-output-profit-ratio': 'STH SOPR',
-  'long-term-holders-adjusted-spent-output-profit-ratio': 'LTH SOPR',
+  'adjusted_sopr': 'Network SOPR',
+  'sth_sopr': 'STH SOPR',
+  'lth_sopr': 'LTH SOPR',
   
   // Risk and activity metrics
-  'sell-side-risk-ratio': 'Sell-Side Risk',
+  'sell_side_risk_ratio': 'Sell-Side Risk',
   'liveliness': 'Liveliness',
   
   // Supply metrics
-  'short-term-holders-supply': 'STH Supply',
-  'short-term-holders-utxo-count': 'STH UTXO Count',
+  'sth_supply': 'STH Supply',
+  'sth_utxo_count': 'STH UTXO Count',
   
   // Realized P&L metrics
-  'realized-profit': 'Network Realized Profit',
-  'negative-realized-loss': 'Network Realized Loss',
-  'net-realized-profit-and-loss': 'Net Realized P&L',
-  'short-term-holders-realized-profit': 'STH Realized Profit',
-  'short-term-holders-negative-realized-loss': 'STH Realized Loss',
+  'realized_profit': 'Network Realized Profit',
+  'neg_realized_loss': 'Network Realized Loss',
+  'net_realized_pnl': 'Net Realized P&L',
+  'sth_realized_profit': 'STH Realized Profit',
+  'sth_neg_realized_loss': 'STH Realized Loss',
   
   // Unrealized P&L metrics
-  'unrealized-profit': 'Network Unrealized Profit',
-  'negative-unrealized-loss': 'Network Unrealized Loss',
-  'net-unrealized-profit-and-loss': 'Net Unrealized P&L',
-  'short-term-holders-unrealized-profit': 'STH Unrealized Profit',
-  'short-term-holders-negative-unrealized-loss': 'STH Unrealized Loss',
+  'unrealized_profit': 'Network Unrealized Profit',
+  'neg_unrealized_loss': 'Network Unrealized Loss',
+  'net_unrealized_pnl': 'Net Unrealized P&L',
+  'sth_unrealized_profit': 'STH Unrealized Profit',
+  'sth_neg_unrealized_loss': 'STH Unrealized Loss',
   
   // Realized cap metrics
-  'short-term-holders-realized-cap': 'STH Realized Cap',
-  'long-term-holders-realized-cap': 'LTH Realized Cap',
+  'sth_realized_cap': 'STH Realized Cap',
+  'lth_realized_cap': 'LTH Realized Cap',
   
   // Other metrics
-  'short-term-holders-realized-price-ratio': 'STH Realized Price Ratio',
-  'short-term-holders-coinblocks-destroyed': 'STH Coins Destroyed',
+  'sth_realized_price_ratio': 'STH Realized Price Ratio',
+  'coinblocks_destroyed': 'STH Coins Destroyed',
   
   // Derived metrics
-  'sth-market-cap': 'STH Market Cap',
-  'sth-mvrv-ratio': 'STH MVRV Ratio',
+  'sth_market_cap': 'STH Market Cap',
+  'sth_mvrv_ratio': 'STH MVRV Ratio',
   'mvrv-ratio': 'MVRV Ratio',
 };
 
@@ -124,37 +124,37 @@ export const METRIC_GROUPS = [
     description: 'Core price metrics and models',
     metrics: [
       {
-        key: 'close',
+        key: 'price_close',
         name: 'Price',
         yaxis: 'y2',
         zScore: false,
       },
       {
-        key: 'short-term-holders-realized-price',
+        key: 'sth_realized_price',
         name: 'STH Realized Price',
         yaxis: 'y2',
         zScore: false,
       },
       {
-        key: 'realized-price',
+        key: 'realized_price',
         name: 'Realized Price',
         yaxis: 'y2',
         zScore: false,
       },
       {
-        key: 'true-market-mean',
+        key: 'true_market_mean',
         name: 'True Market Mean',
         yaxis: 'y2',
         zScore: false,
       },
       {
-        key: 'vaulted-price',
+        key: 'vaulted_price',
         name: 'Vaulted Price',
         yaxis: 'y2',
         zScore: false,
       },
       {
-        key: '200d-sma',
+        key: 'price_200d_sma',
         name: '200d SMA',
         yaxis: 'y2',
         zScore: false,
@@ -173,7 +173,7 @@ export const METRIC_GROUPS = [
         zScore: false,
       },
       {
-        key: 'realized-cap',
+        key: 'realized_cap',
         name: 'Network Realized Cap',
         yaxis: 'y2',
         zScore: false,
@@ -196,12 +196,12 @@ export const DERIVED_METRICS = [
     name: 'mvrv-ratio',
     formula: (metrics: Record<string, number[]>) => {
       const mc = metrics['market_cap'];
-      const rc = metrics['realized-cap'];
+      const rc = metrics['realized_cap'];
       console.log('MVRV calculation inputs:', {
         market_cap: mc ? mc.length : 0,
         realizedCap: rc ? rc.length : 0,
-        market_capSample: mc ? mc.slice(0, 3) : [],
-        realizedCapSample: rc ? rc.slice(0, 3) : []
+        market_capSample: mc ? mc.slice(-5) : [],
+        realizedCapSample: rc ? rc.slice(-5) : []
       });
       if (!mc || !rc || mc.length !== rc.length) {
         console.warn('MVRV calculation failed: missing or mismatched data');
@@ -224,7 +224,7 @@ export const DERIVED_METRICS = [
   {
     name: 'Mayer Multiple',
     formula: (metrics: Record<string, number[]>) => {
-      const price = metrics['close'];
+      const price = metrics['price_close'];
       const sma = metrics['200d-sma'];
       if (!price || !sma || price.length !== sma.length) return [];
       return price.map((v, i) => {
@@ -238,8 +238,8 @@ export const DERIVED_METRICS = [
   {
     name: 'STH Market Cap',
     formula: (metrics: Record<string, number[]>) => {
-      const sthSupply = metrics['short-term-holders-supply'];
-      const price = metrics['close'];
+      const sthSupply = metrics['sth_supply'];
+      const price = metrics['price_close'];
       if (!sthSupply || !price || sthSupply.length !== price.length) return [];
       return sthSupply.map((supply, i) => {
         if (typeof supply !== 'number' || typeof price[i] !== 'number' || isNaN(supply) || isNaN(price[i])) {
@@ -252,14 +252,14 @@ export const DERIVED_METRICS = [
   {
     name: 'STH MVRV Ratio',
     formula: (metrics: Record<string, number[]>) => {
-      const sthMarketCap = metrics['short-term-holders-supply']?.map((supply, i) => {
-        const price = metrics['close']?.[i];
+      const sthMarketCap = metrics['sth_supply']?.map((supply, i) => {
+        const price = metrics['price_close']?.[i];
         if (typeof supply !== 'number' || typeof price !== 'number' || isNaN(supply) || isNaN(price)) {
           return NaN;
         }
         return supply * price;
       }) || [];
-      const sthRealizedCap = metrics['short-term-holders-realized-cap'];
+      const sthRealizedCap = metrics['sth_realized_cap'];
       if (!sthMarketCap || !sthRealizedCap || sthMarketCap.length !== sthRealizedCap.length) return [];
       return sthMarketCap.map((marketCap, i) => {
         if (typeof marketCap !== 'number' || typeof sthRealizedCap[i] !== 'number' || isNaN(marketCap) || isNaN(sthRealizedCap[i]) || sthRealizedCap[i] === 0) {
@@ -276,38 +276,38 @@ export const DERIVED_METRICS = [
 // FALSE = negative correlation (higher = cheaper)
 export const METRIC_CORRELATION: Record<string, boolean> = {
   // POSITIVE CORRELATION (higher = more expensive)
-  'close': true,
-  'realized-price': true,
-  '200d-sma': true,
-  'true-market-mean': true,
-  'vaulted-price': true,
+  'price_close': true,
+  'realized_price': true,
+  'price_200d_sma': true,
+  'true_market_mean': true,
+  'vaulted_price': true,
   'market_cap': true,
-  'realized-cap': true,
-  'adjusted-spent-output-profit-ratio': true,
-  'short-term-holders-adjusted-spent-output-profit-ratio': true,
-  'long-term-holders-adjusted-spent-output-profit-ratio': true,
-  'realized-profit': true,
-  'unrealized-profit': true,
-  'short-term-holders-realized-profit': true,
-  'short-term-holders-unrealized-profit': true,
-  'long-term-holders-realized-cap': true,
-  'short-term-holders-realized-price-ratio': true,
-  'short-term-holders-supply': true,
-  'short-term-holders-utxo-count': true,
-  'short-term-holders-realized-cap': true,
-  'sth-market-cap': true,
-  'sth-mvrv-ratio': true,
+  'realized_cap': true,
+  'adjusted_sopr': true,
+  'sth_sopr': true,
+  'lth_sopr': true,
+  'realized_profit': true,
+  'unrealized_profit': true,
+  'sth_realized_profit': true,
+  'sth_unrealized_profit': true,
+  'lth_realized_cap': true,
+  'sth_realized_price_ratio': true,
+  'sth_supply': true,
+  'sth_utxo_count': true,
+  'sth_realized_cap': true,
+  'sth_market_cap': true,
+  'sth_mvrv_ratio': true,
   
   // NEGATIVE CORRELATION (higher = cheaper)
-  'negative-realized-loss': false,
-  'negative-unrealized-loss': false,
-  'short-term-holders-negative-realized-loss': false,
-  'short-term-holders-negative-unrealized-loss': false,
-  'sell-side-risk-ratio': false,
+  'neg_realized_loss': false,
+  'neg_unrealized_loss': false,
+  'sth_neg_realized_loss': false,
+  'sth_neg_unrealized_loss': false,
+  'sell_side_risk_ratio': false,
   'liveliness': false,
-  'short-term-holders-coinblocks-destroyed': false,
+  'coinblocks_destroyed': false,
   
   // NEUTRAL (depends on sign)
-  'net-realized-profit-and-loss': true, // Treat as positive for now
-  'net-unrealized-profit-and-loss': true, // Treat as positive for now
+  'net_realized_pnl': true, // Treat as positive for now
+  'net_unrealized_pnl': true, // Treat as positive for now
 }; 

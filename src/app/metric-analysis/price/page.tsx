@@ -33,7 +33,7 @@ export default function PriceAnalysis() {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(getApiUrl('/api/vecs/query?index=dateindex&ids=date,close,realized-price,true-market-mean,vaulted-price&format=json'));
+        const response = await fetch('/api/bitview?index=dateindex&ids=date,price_close,realized_price,true_market_mean,vaulted_price&format=json');
         
         if (!response.ok) {
           throw new Error(`Failed to fetch price data: ${response.status}`);
