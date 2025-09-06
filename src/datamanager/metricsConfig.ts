@@ -42,7 +42,6 @@ export const METRICS_LIST = [
   'neg_unrealized_loss',
   'net_unrealized_pnl',
   'lth_realized_cap',
-  'mvrv_ratio',
 ];
 
 // Create a combined list that includes both base and derived metrics
@@ -55,7 +54,7 @@ export const ALL_METRICS_LIST = [
 // Metric scale types for axis assignment
 export const METRIC_SCALE_TYPES = {
   USD_LARGE: ['market_cap', 'realized_cap'], // Billions/Trillions - Log scale
-  USD_PRICE: ['price_close', 'realized_price', 'price_200d_sma', 'true_market_mean', 'vaulted_price', 'sth_realized_price'], // Thousands - Log scale
+  USD_PRICE: ['price_close', 'price_high', 'realized_price', 'price_200d_sma', 'true_market_mean', 'vaulted_price', 'sth_realized_price'], // Thousands - Log scale
   RATIO: ['mvrv-ratio', 'adjusted_sopr', 'sell_side_risk_ratio'], // 0-10 range - Linear scale
   Z_SCORE: ['*_z'], // -3 to +3 range - Linear scale
   PERCENTAGE: ['liveliness'], // 0-100% - Linear scale
@@ -66,6 +65,7 @@ export const METRIC_SCALE_TYPES = {
 export const METRIC_DISPLAY_NAMES: Record<string, string> = {
   // Price metrics
   'price_close': 'Price',
+  'price_high': 'Price High',
   'realized_price': 'Realized Price',
   'price_200d_sma': '200d SMA',
   'true_market_mean': 'True Market Mean',
@@ -277,6 +277,7 @@ export const DERIVED_METRICS = [
 export const METRIC_CORRELATION: Record<string, boolean> = {
   // POSITIVE CORRELATION (higher = more expensive)
   'price_close': true,
+  'price_high': true,
   'realized_price': true,
   'price_200d_sma': true,
   'true_market_mean': true,
