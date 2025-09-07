@@ -151,6 +151,8 @@ export default function AIWorkbenchV2() {
           leftAxisMetrics.push(metric);
         } else if (METRIC_SCALE_TYPES.USD_PRICE.includes(metric as any)) {
           leftAxisMetrics.push(metric);
+        } else if (METRIC_SCALE_TYPES.USD_LOSS.includes(metric as any)) {
+          rightAxisMetrics.push(metric);
         } else if (METRIC_SCALE_TYPES.RATIO.includes(metric as any)) {
           rightAxisMetrics.push(metric);
         } else if (metric.endsWith('_z')) {
@@ -182,10 +184,19 @@ export default function AIWorkbenchV2() {
       const min = Math.min(...slicedData);
       const max = Math.max(...slicedData);
       
-      // Skip metrics with invalid ranges
-      if (min === max || min <= 0 || max <= 0) {
+      // Skip metrics with invalid ranges (but allow negative values for loss metrics)
+      if (min === max) {
         if (process.env.NODE_ENV === 'development') {
           console.warn(`Skipping metric ${metric} due to invalid range: min=${min}, max=${max}`);
+        }
+        return;
+      }
+      
+      // For loss metrics, allow negative values; for others, require positive values
+      const isLossMetric = METRIC_SCALE_TYPES.USD_LOSS.includes(metric as any);
+      if (!isLossMetric && (min <= 0 || max <= 0)) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn(`Skipping metric ${metric} due to non-positive range: min=${min}, max=${max}`);
         }
         return;
       }
@@ -198,6 +209,8 @@ export default function AIWorkbenchV2() {
           METRIC_SCALE_TYPES.USD_PRICE.includes(metric as any) ||
           METRIC_SCALE_TYPES.COUNT.includes(metric as any)) {
         scale = 'log';
+      } else if (METRIC_SCALE_TYPES.USD_LOSS.includes(metric as any)) {
+        scale = 'linear'; // Loss metrics should use linear scale
       }
       
       metricRanges.push({ metric, range: { min, max }, scale });

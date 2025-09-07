@@ -59,6 +59,7 @@ export const METRIC_SCALE_TYPES = {
   Z_SCORE: ['*_z'], // -3 to +3 range - Linear scale
   PERCENTAGE: ['liveliness'], // 0-100% - Linear scale
   COUNT: ['sth_utxo_count'], // Large integers - Log scale
+  USD_LOSS: ['sth_neg_realized_loss', 'sth_neg_unrealized_loss', 'neg_realized_loss', 'neg_unrealized_loss'], // Loss metrics - can be negative - Linear scale
 } as const;
 
 // Complete mapping of metric keys to user-friendly display names
@@ -186,8 +187,162 @@ export const METRIC_GROUPS = [
       },
     ],
   },
-
-
+  {
+    name: 'STH Metrics',
+    description: 'Short-Term Holder metrics and analysis',
+    metrics: [
+      {
+        key: 'sth_realized_price',
+        name: 'STH Realized Price',
+        yaxis: 'y2',
+        zScore: false,
+      },
+      {
+        key: 'sth_supply',
+        name: 'STH Supply',
+        yaxis: 'y2',
+        zScore: false,
+      },
+      {
+        key: 'sth_utxo_count',
+        name: 'STH UTXO Count',
+        yaxis: 'y2',
+        zScore: false,
+      },
+      {
+        key: 'sth_realized_cap',
+        name: 'STH Realized Cap',
+        yaxis: 'y2',
+        zScore: false,
+      },
+      {
+        key: 'sth_realized_price_ratio',
+        name: 'STH Realized Price Ratio',
+        yaxis: 'y2',
+        zScore: false,
+      },
+      {
+        key: 'sth_realized_profit',
+        name: 'STH Realized Profit',
+        yaxis: 'y2',
+        zScore: false,
+      },
+      {
+        key: 'sth_neg_realized_loss',
+        name: 'STH Realized Loss',
+        yaxis: 'y2',
+        zScore: false,
+      },
+      {
+        key: 'sth_sopr',
+        name: 'STH SOPR',
+        yaxis: 'y2',
+        zScore: false,
+      },
+      {
+        key: 'sth_unrealized_profit',
+        name: 'STH Unrealized Profit',
+        yaxis: 'y2',
+        zScore: false,
+      },
+      {
+        key: 'sth_neg_unrealized_loss',
+        name: 'STH Unrealized Loss',
+        yaxis: 'y2',
+        zScore: false,
+      },
+      {
+        key: 'coinblocks_destroyed',
+        name: 'STH Coins Destroyed',
+        yaxis: 'y2',
+        zScore: false,
+      },
+    ],
+  },
+  {
+    name: 'LTH Metrics',
+    description: 'Long-Term Holder metrics and analysis',
+    metrics: [
+      {
+        key: 'lth_sopr',
+        name: 'LTH SOPR',
+        yaxis: 'y2',
+        zScore: false,
+      },
+      {
+        key: 'lth_realized_cap',
+        name: 'LTH Realized Cap',
+        yaxis: 'y2',
+        zScore: false,
+      },
+    ],
+  },
+  {
+    name: 'Network Metrics',
+    description: 'Network-wide profit/loss and activity metrics',
+    metrics: [
+      {
+        key: 'adjusted_sopr',
+        name: 'Network SOPR',
+        yaxis: 'y2',
+        zScore: false,
+      },
+      {
+        key: 'realized_profit',
+        name: 'Network Realized Profit',
+        yaxis: 'y2',
+        zScore: false,
+      },
+      {
+        key: 'neg_realized_loss',
+        name: 'Network Realized Loss',
+        yaxis: 'y2',
+        zScore: false,
+      },
+      {
+        key: 'net_realized_pnl',
+        name: 'Net Realized P&L',
+        yaxis: 'y2',
+        zScore: false,
+      },
+      {
+        key: 'unrealized_profit',
+        name: 'Network Unrealized Profit',
+        yaxis: 'y2',
+        zScore: false,
+      },
+      {
+        key: 'neg_unrealized_loss',
+        name: 'Network Unrealized Loss',
+        yaxis: 'y2',
+        zScore: false,
+      },
+      {
+        key: 'net_unrealized_pnl',
+        name: 'Net Unrealized P&L',
+        yaxis: 'y2',
+        zScore: false,
+      },
+    ],
+  },
+  {
+    name: 'Risk & Activity',
+    description: 'Risk ratios and network activity metrics',
+    metrics: [
+      {
+        key: 'sell_side_risk_ratio',
+        name: 'Sell-Side Risk',
+        yaxis: 'y2',
+        zScore: false,
+      },
+      {
+        key: 'liveliness',
+        name: 'Liveliness',
+        yaxis: 'y2',
+        zScore: false,
+      },
+    ],
+  },
 ];
 
 // Derived metrics with formulas
