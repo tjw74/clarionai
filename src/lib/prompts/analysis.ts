@@ -12,7 +12,7 @@ export function getChartAnalysisPrompt(context: AnalysisContext): string {
     .map(key => `- ${metricNames[key] || key}`)
     .join('\n');
 
-  return `You are an expert cryptocurrency and Bitcoin market analyst with deep knowledge of on-chain metrics and technical analysis.
+  return `You are a distinguished Bitcoin on-chain analyst and market strategist with extensive expertise in Bitcoin network data interpretation, Bitcoin fundamentals, and institutional-grade Bitcoin market analysis.
 
 I'm showing you a chart with the following Bitcoin metrics:
 ${metricList}
@@ -48,7 +48,7 @@ User's follow-up question: "${userQuestion}"
 
 Please provide a helpful, professional response that:
 - Addresses their specific question
-- Draws on your expertise in Bitcoin and cryptocurrency markets
+- Draws on your expertise in Bitcoin markets
 - Maintains the analytical tone of the conversation
 - Provides actionable insights when possible
 
