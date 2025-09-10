@@ -35,6 +35,7 @@ export const METRICS_LIST = [
   'coinblocks_destroyed',
   // New comprehensive profit/loss metrics
   'lth_sopr',
+  'lth_supply',
   'realized_profit',
   'neg_realized_loss',
   'net_realized_pnl',
@@ -59,6 +60,7 @@ export const METRIC_SCALE_TYPES = {
   Z_SCORE: ['*_z'], // -3 to +3 range - Linear scale
   PERCENTAGE: ['liveliness'], // 0-100% - Linear scale
   COUNT: ['sth_utxo_count'], // Large integers - Log scale
+  SUPPLY: ['sth_supply', 'lth_supply'], // Supply metrics - Large numbers - Log scale
   USD_LOSS: ['sth_neg_realized_loss', 'sth_neg_unrealized_loss', 'neg_realized_loss', 'neg_unrealized_loss'], // Loss metrics - can be negative - Linear scale
 } as const;
 
@@ -88,6 +90,7 @@ export const METRIC_DISPLAY_NAMES: Record<string, string> = {
   
   // Supply metrics
   'sth_supply': 'STH Supply',
+  'lth_supply': 'LTH Supply',
   'sth_utxo_count': 'STH UTXO Count',
   
   // Realized P&L metrics
@@ -266,6 +269,12 @@ export const METRIC_GROUPS = [
       {
         key: 'lth_sopr',
         name: 'LTH SOPR',
+        yaxis: 'y2',
+        zScore: false,
+      },
+      {
+        key: 'lth_supply',
+        name: 'LTH Supply',
         yaxis: 'y2',
         zScore: false,
       },
@@ -449,6 +458,7 @@ export const METRIC_CORRELATION: Record<string, boolean> = {
   'lth_realized_cap': true,
   'sth_realized_price_ratio': true,
   'sth_supply': true,
+  'lth_supply': true,
   'sth_utxo_count': true,
   'sth_realized_cap': true,
   'sth_market_cap': true,
