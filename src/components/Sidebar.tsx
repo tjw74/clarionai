@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import Image from "next/image";
-import { Bot, BarChart3, DollarSign, Activity } from "lucide-react";
+import { Bot, BarChart3, DollarSign, Activity, TrendingUp } from "lucide-react";
 
 export default function Sidebar() {
   const [open, setOpen] = useState(true);
@@ -88,6 +88,13 @@ export default function Sidebar() {
         >
           <Activity className="w-5 h-5" />
           SOPR
+        </Link>
+        <Link
+          href="/metric-analysis/mvrv-delta-gradient"
+          className="flex items-center gap-3 px-3 py-2 rounded transition-colors border border-transparent hover:border-white/40 text-base ml-4"
+        >
+          <TrendingUp className="w-5 h-5" />
+          MVRV Delta
         </Link>
       </nav>
     </aside>

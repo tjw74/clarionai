@@ -1,0 +1,560 @@
+[
+  {
+    "metric": "price_close",
+    "status": "WORKING",
+    "totalValues": 6148,
+    "nullCount": 0,
+    "zeroCount": 550,
+    "validCount": 5598,
+    "firstValid": 0.01,
+    "lastValid": 102155.6,
+    "sample": [
+      106538.3,
+      101537.3,
+      103900,
+      101290.1,
+      102155.6
+    ],
+    "data": "HAS_DATA"
+  },
+  {
+    "metric": "price_high",
+    "status": "WORKING",
+    "totalValues": 6148,
+    "nullCount": 0,
+    "zeroCount": 550,
+    "validCount": 5598,
+    "firstValid": 0.01,
+    "lastValid": 102252.2,
+    "sample": [
+      110699.6,
+      107258.7,
+      104499.9,
+      104115.9,
+      102252.2
+    ],
+    "data": "HAS_DATA"
+  },
+  {
+    "metric": "realized_price",
+    "status": "WORKING",
+    "totalValues": 6148,
+    "nullCount": 1,
+    "zeroCount": 584,
+    "validCount": 5563,
+    "firstValid": 0.0007972562076296682,
+    "lastValid": 55960.94782018819,
+    "sample": [
+      55999.0678157363,
+      55971.85609062373,
+      55963.67755041081,
+      55959.75787398324,
+      55960.94782018819
+    ],
+    "data": "HAS_DATA"
+  },
+  {
+    "metric": "price_200d_sma",
+    "status": "WORKING",
+    "totalValues": 6148,
+    "nullCount": 0,
+    "zeroCount": 550,
+    "validCount": 5598,
+    "firstValid": 0.00004999999873689376,
+    "lastValid": 110194.6484375,
+    "sample": [
+      109861.453125,
+      109946.78125,
+      110040.671875,
+      110121.3671875,
+      110194.6484375
+    ],
+    "data": "HAS_DATA"
+  },
+  {
+    "metric": "true_market_mean",
+    "status": "WORKING",
+    "totalValues": 6148,
+    "nullCount": 4,
+    "zeroCount": 581,
+    "validCount": 5563,
+    "firstValid": 0.007567176010668869,
+    "lastValid": 81921.73544659112,
+    "sample": [
+      82032.19718285317,
+      81961.49568102327,
+      81937.5324590944,
+      81921.858480442,
+      81921.73544659112
+    ],
+    "data": "HAS_DATA"
+  },
+  {
+    "metric": "vaulted_price",
+    "status": "WORKING",
+    "totalValues": 6148,
+    "nullCount": 1,
+    "zeroCount": 599,
+    "validCount": 5548,
+    "firstValid": 0.01,
+    "lastValid": 152173.38,
+    "sample": [
+      152150.6,
+      152154.48,
+      152156.66,
+      152165.27,
+      152173.38
+    ],
+    "data": "HAS_DATA"
+  },
+  {
+    "metric": "market_cap",
+    "status": "WORKING",
+    "totalValues": 6148,
+    "nullCount": 0,
+    "zeroCount": 550,
+    "validCount": 5598,
+    "firstValid": 33103.5,
+    "lastValid": 2037516865141.69,
+    "sample": [
+      2124036109053.6,
+      2018761847510.69,
+      2072261362064.37,
+      2018939535619.59,
+      2037516865141.69
+    ],
+    "data": "HAS_DATA"
+  },
+  {
+    "metric": "realized_cap",
+    "status": "WORKING",
+    "totalValues": 6148,
+    "nullCount": 0,
+    "zeroCount": 585,
+    "validCount": 5563,
+    "firstValid": 2981.22,
+    "lastValid": 1116153935495.93,
+    "sample": [
+      1116839173807.15,
+      1116319379669.14,
+      1116180398755.21,
+      1116126704261.17,
+      1116153935495.93
+    ],
+    "data": "HAS_DATA"
+  },
+  {
+    "metric": "adjusted_sopr",
+    "status": "WORKING",
+    "totalValues": 6148,
+    "nullCount": 585,
+    "zeroCount": 0,
+    "validCount": 5563,
+    "firstValid": 12.584948688711517,
+    "lastValid": 1.0051617547470326,
+    "sample": [
+      1.009523728273386,
+      0.9924368100671201,
+      0.9965734479288938,
+      0.9979737162754101,
+      1.0051617547470326
+    ],
+    "data": "HAS_DATA"
+  },
+  {
+    "metric": "sell_side_risk_ratio",
+    "status": "WORKING",
+    "totalValues": 6148,
+    "nullCount": 585,
+    "zeroCount": 0,
+    "validCount": 5563,
+    "firstValid": 85.20002,
+    "lastValid": 0.00951675,
+    "sample": [
+      0.18853879,
+      0.26964968,
+      0.15916161,
+      0.13836223,
+      0.00951675
+    ],
+    "data": "HAS_DATA"
+  },
+  {
+    "metric": "liveliness",
+    "status": "WORKING",
+    "totalValues": 6148,
+    "nullCount": 1,
+    "zeroCount": 3,
+    "validCount": 6144,
+    "firstValid": 0.006044176123995008,
+    "lastValid": 0.6322537690722958,
+    "sample": [
+      0.631947984012474,
+      0.6321361935240138,
+      0.6321952883601122,
+      0.632242013592369,
+      0.6322537690722958
+    ],
+    "data": "HAS_DATA"
+  },
+  {
+    "metric": "sth_realized_price",
+    "status": "WORKING",
+    "totalValues": 6148,
+    "nullCount": 1,
+    "zeroCount": 584,
+    "validCount": 5563,
+    "firstValid": 0.0017874031015420652,
+    "lastValid": 112318.71049029141,
+    "sample": [
+      113192.07929910973,
+      112769.88245200829,
+      112548.76914116938,
+      112340.2742076875,
+      112318.71049029141
+    ],
+    "data": "HAS_DATA"
+  },
+  {
+    "metric": "sth_supply",
+    "status": "WORKING",
+    "totalValues": 6148,
+    "nullCount": 0,
+    "zeroCount": 1,
+    "validCount": 6147,
+    "firstValid": 70000000000,
+    "lastValid": 480124795979663,
+    "sample": [
+      469937569756503,
+      473796480350818,
+      477036258444640,
+      479617147212980,
+      480124795979663
+    ],
+    "data": "HAS_DATA"
+  },
+  {
+    "metric": "sth_utxo_count",
+    "status": "WORKING",
+    "totalValues": 6148,
+    "nullCount": 0,
+    "zeroCount": 1,
+    "validCount": 6147,
+    "firstValid": 14,
+    "lastValid": 18073205,
+    "sample": [
+      18356781,
+      18301966,
+      18198104,
+      18090625,
+      18073205
+    ],
+    "data": "HAS_DATA"
+  },
+  {
+    "metric": "sth_realized_cap",
+    "status": "WORKING",
+    "totalValues": 6148,
+    "nullCount": 0,
+    "zeroCount": 585,
+    "validCount": 5563,
+    "firstValid": 2981.22,
+    "lastValid": 539265205823.64,
+    "sample": [
+      531926785702.06,
+      534294313417.72,
+      536893262805.96,
+      538798495388.11,
+      539265205823.64
+    ],
+    "data": "HAS_DATA"
+  },
+  {
+    "metric": "sth_realized_price_ratio",
+    "status": "WORKING",
+    "totalValues": 6148,
+    "nullCount": 1,
+    "zeroCount": 0,
+    "validCount": 6147,
+    "firstValid": 1,
+    "lastValid": 0.9095235,
+    "sample": [
+      0.9408933,
+      0.8975892,
+      0.92316604,
+      0.9010605,
+      0.9095235
+    ],
+    "data": "HAS_DATA"
+  },
+  {
+    "metric": "sth_realized_profit",
+    "status": "WORKING",
+    "totalValues": 6148,
+    "nullCount": 0,
+    "zeroCount": 598,
+    "validCount": 5550,
+    "firstValid": 2540,
+    "lastValid": 11445160.21,
+    "sample": [
+      124302993.06,
+      116276440.33,
+      285111603.73,
+      113198602.94,
+      11445160.21
+    ],
+    "data": "HAS_DATA"
+  },
+  {
+    "metric": "sth_neg_realized_loss",
+    "status": "WORKING",
+    "totalValues": 6148,
+    "nullCount": 0,
+    "zeroCount": 692,
+    "validCount": 5456,
+    "firstValid": -44.68,
+    "lastValid": -41718613.82,
+    "sample": [
+      -798329105.43,
+      -1778471063.43,
+      -947167276.68,
+      -816143014.93,
+      -41718613.82
+    ],
+    "data": "HAS_DATA"
+  },
+  {
+    "metric": "sth_sopr",
+    "status": "WORKING",
+    "totalValues": 6148,
+    "nullCount": 585,
+    "zeroCount": 0,
+    "validCount": 5563,
+    "firstValid": 2.5775221722604527,
+    "lastValid": 0.9954537897308843,
+    "sample": [
+      0.9928539100551184,
+      0.9860405207745345,
+      0.9930280654648536,
+      0.9916827180143318,
+      0.9954537897308843
+    ],
+    "data": "HAS_DATA"
+  },
+  {
+    "metric": "sth_unrealized_profit",
+    "status": "WORKING",
+    "totalValues": 6148,
+    "nullCount": 0,
+    "zeroCount": 654,
+    "validCount": 5494,
+    "firstValid": 398.99,
+    "lastValid": 252281899.4,
+    "sample": [
+      345116958.63,
+      62854829.29,
+      537790303.2,
+      65192586.79,
+      252281899.4
+    ],
+    "data": "HAS_DATA"
+  },
+  {
+    "metric": "sth_neg_unrealized_loss",
+    "status": "WORKING",
+    "totalValues": 6148,
+    "nullCount": 0,
+    "zeroCount": 747,
+    "validCount": 5401,
+    "firstValid": -575.72,
+    "lastValid": -49045142380.11,
+    "sample": [
+      -31787764128.74,
+      -54782886448.57,
+      -41791399759.03,
+      -53375691711.66,
+      -49045142380.11
+    ],
+    "data": "HAS_DATA"
+  },
+  {
+    "metric": "coinblocks_destroyed",
+    "status": "WORKING",
+    "totalValues": 6148,
+    "nullCount": 0,
+    "zeroCount": 255,
+    "validCount": 5893,
+    "firstValid": 10412,
+    "lastValid": 405895985.0632912,
+    "sample": [
+      3897941135.129138,
+      4110623775.974998,
+      2512277908.3262453,
+      2376145375.424911,
+      405895985.0632912
+    ],
+    "data": "HAS_DATA"
+  },
+  {
+    "metric": "lth_sopr",
+    "status": "WORKING",
+    "totalValues": 6148,
+    "nullCount": 756,
+    "zeroCount": 0,
+    "validCount": 5392,
+    "firstValid": 10.666666666666666,
+    "lastValid": 1.0756806405877184,
+    "sample": [
+      2.2000533932593482,
+      1.2838313810872521,
+      1.149976838148645,
+      1.2018471939689133,
+      1.0756806405877184
+    ],
+    "data": "HAS_DATA"
+  },
+  {
+    "metric": "lth_supply",
+    "status": "WORKING",
+    "totalValues": 6148,
+    "nullCount": 0,
+    "zeroCount": 151,
+    "validCount": 5997,
+    "firstValid": 65000000000,
+    "lastValid": 1514398132906956,
+    "sample": [
+      1524451296647639,
+      1520633323552260,
+      1517436670447104,
+      1514899531673650,
+      1514398132906956
+    ],
+    "data": "HAS_DATA"
+  },
+  {
+    "metric": "realized_profit",
+    "status": "WORKING",
+    "totalValues": 6148,
+    "nullCount": 0,
+    "zeroCount": 585,
+    "validCount": 5563,
+    "firstValid": 2540,
+    "lastValid": 63603635.67,
+    "sample": [
+      1307032671.19,
+      1224421071.44,
+      796736462.84,
+      722670159.14,
+      63603635.67
+    ],
+    "data": "HAS_DATA"
+  },
+  {
+    "metric": "neg_realized_loss",
+    "status": "WORKING",
+    "totalValues": 6148,
+    "nullCount": 0,
+    "zeroCount": 692,
+    "validCount": 5456,
+    "firstValid": -44.68,
+    "lastValid": -42659414.19,
+    "sample": [
+      -798735635.68,
+      -1786545403.57,
+      -980189096.74,
+      -821749165.82,
+      -42659414.19
+    ],
+    "data": "HAS_DATA"
+  },
+  {
+    "metric": "net_realized_pnl",
+    "status": "WORKING",
+    "totalValues": 6148,
+    "nullCount": 0,
+    "zeroCount": 585,
+    "validCount": 5563,
+    "firstValid": 2540,
+    "lastValid": 20893394.66,
+    "sample": [
+      508318460.79,
+      -562224287.8,
+      -183206528.82,
+      -98628675.56,
+      20893394.66
+    ],
+    "data": "HAS_DATA"
+  },
+  {
+    "metric": "unrealized_profit",
+    "status": "WORKING",
+    "totalValues": 6148,
+    "nullCount": 0,
+    "zeroCount": 637,
+    "validCount": 5511,
+    "firstValid": 398.99,
+    "lastValid": 804070074305.39,
+    "sample": [
+      862933575148.4,
+      793220556240.16,
+      827300596426.25,
+      792207532861.96,
+      804070074305.39
+    ],
+    "data": "HAS_DATA"
+  },
+  {
+    "metric": "neg_unrealized_loss",
+    "status": "WORKING",
+    "totalValues": 6148,
+    "nullCount": 0,
+    "zeroCount": 682,
+    "validCount": 5466,
+    "firstValid": -575.72,
+    "lastValid": -52030240547.01,
+    "sample": [
+      -32261744879.45,
+      -58550392876.61,
+      -43434472238.02,
+      -57174463120.2,
+      -52030240547.01
+    ],
+    "data": "HAS_DATA"
+  },
+  {
+    "metric": "net_unrealized_pnl",
+    "status": "WORKING",
+    "totalValues": 6148,
+    "nullCount": 0,
+    "zeroCount": 586,
+    "validCount": 5562,
+    "firstValid": 398.99,
+    "lastValid": 752039833758.38,
+    "sample": [
+      830671830268.95,
+      734670163363.55,
+      783866124188.23,
+      735033069741.76,
+      752039833758.38
+    ],
+    "data": "HAS_DATA"
+  },
+  {
+    "metric": "lth_realized_cap",
+    "status": "WORKING",
+    "totalValues": 6148,
+    "nullCount": 0,
+    "zeroCount": 735,
+    "validCount": 5413,
+    "firstValid": 328.3,
+    "lastValid": 576888729672.29,
+    "sample": [
+      584912388105.09,
+      582025066251.42,
+      579287135949.25,
+      577328208873.06,
+      576888729672.29
+    ],
+    "data": "HAS_DATA"
+  }
+]

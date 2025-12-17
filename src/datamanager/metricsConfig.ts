@@ -50,6 +50,10 @@ export const ALL_METRICS_LIST = [
   ...METRICS_LIST,
   'sth-market-cap',
   'sth-mvrv-ratio',
+  'mvrv-ratio-delta-30d',
+  'mvrv-ratio-delta-90d',
+  'mvrv-ratio-delta-155d',
+  'mvrv-ratio-delta-180d',
 ];
 
 // Metric scale types for axis assignment
@@ -119,6 +123,10 @@ export const METRIC_DISPLAY_NAMES: Record<string, string> = {
   'sth_market_cap': 'STH Market Cap',
   'sth_mvrv_ratio': 'STH MVRV Ratio',
   'mvrv-ratio': 'MVRV Ratio',
+  'mvrv-ratio-delta-30d': 'MVRV Delta 30d',
+  'mvrv-ratio-delta-90d': 'MVRV Delta 90d',
+  'mvrv-ratio-delta-155d': 'MVRV Delta 155d',
+  'mvrv-ratio-delta-180d': 'MVRV Delta 180d',
 };
 
 // Metric groups configuration
@@ -430,6 +438,58 @@ export const DERIVED_METRICS = [
           return NaN;
         }
         return marketCap / sthRealizedCap[i];
+      });
+    },
+  },
+  {
+    name: 'mvrv-ratio-delta-30d',
+    formula: (metrics: Record<string, number[]>) => {
+      const mvrv = metrics['mvrv-ratio'];
+      if (!mvrv || mvrv.length === 0) return [];
+      return mvrv.map((v, i) => {
+        if (i < 30 || typeof v !== 'number' || isNaN(v)) return NaN;
+        const past = mvrv[i - 30];
+        if (typeof past !== 'number' || isNaN(past) || past === 0) return NaN;
+        return ((v - past) / past) * 100; // percentage change
+      });
+    },
+  },
+  {
+    name: 'mvrv-ratio-delta-90d',
+    formula: (metrics: Record<string, number[]>) => {
+      const mvrv = metrics['mvrv-ratio'];
+      if (!mvrv || mvrv.length === 0) return [];
+      return mvrv.map((v, i) => {
+        if (i < 90 || typeof v !== 'number' || isNaN(v)) return NaN;
+        const past = mvrv[i - 90];
+        if (typeof past !== 'number' || isNaN(past) || past === 0) return NaN;
+        return ((v - past) / past) * 100; // percentage change
+      });
+    },
+  },
+  {
+    name: 'mvrv-ratio-delta-155d',
+    formula: (metrics: Record<string, number[]>) => {
+      const mvrv = metrics['mvrv-ratio'];
+      if (!mvrv || mvrv.length === 0) return [];
+      return mvrv.map((v, i) => {
+        if (i < 155 || typeof v !== 'number' || isNaN(v)) return NaN;
+        const past = mvrv[i - 155];
+        if (typeof past !== 'number' || isNaN(past) || past === 0) return NaN;
+        return ((v - past) / past) * 100; // percentage change
+      });
+    },
+  },
+  {
+    name: 'mvrv-ratio-delta-180d',
+    formula: (metrics: Record<string, number[]>) => {
+      const mvrv = metrics['mvrv-ratio'];
+      if (!mvrv || mvrv.length === 0) return [];
+      return mvrv.map((v, i) => {
+        if (i < 180 || typeof v !== 'number' || isNaN(v)) return NaN;
+        const past = mvrv[i - 180];
+        if (typeof past !== 'number' || isNaN(past) || past === 0) return NaN;
+        return ((v - past) / past) * 100; // percentage change
       });
     },
   },
