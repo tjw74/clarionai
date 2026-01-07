@@ -598,55 +598,8 @@ export default function AIWorkbenchV2() {
 
   return (
     <div className="bg-black text-white h-screen w-full flex flex-col overflow-hidden border-b border-white/20">
-      <header className="h-16 w-full flex items-center justify-between px-8 flex-none">
-        <div />
-        <h1 className="text-3xl font-bold">AI Workbench</h1>
-        <div className="flex items-center gap-2">
-          <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-              <Button variant="outline" role="combobox" aria-expanded={open} className="h-10 w-[300px] justify-between bg-black border-white/20 text-white hover:bg_WHITE/10">
-                {selectedMetricKeys.length > 0 ? `${selectedMetricKeys.length} metric${selectedMetricKeys.length > 1 ? 's' : ''} selected` : 'Select metrics...'}
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[300px] p-0 bg-black border-white/20">
-              <Command>
-                <CommandInput placeholder="Search groups and metrics..." className="h-9" />
-                <CommandList className="max-h-[400px]">
-                  <CommandEmpty>No results found.</CommandEmpty>
-                  <CommandGroup heading="Groups">
-                    {METRIC_GROUPS.map((group) => (
-                      <div key={`group-${group.name}`}>
-                        <CommandItem value={group.name} onSelect={() => {
-                          const isSelected = selectedGroups.includes(group.name);
-                          setSelectedGroups((prev) => (isSelected ? prev.filter((g) => g !== group.name) : [...prev, group.name]));
-                        }}>
-                          <Check className={cn('mr-2 h-4 w-4', selectedGroups.includes(group.name) ? 'opacity-100' : 'opacity-0')} />
-                          {group.name}
-                        </CommandItem>
-                      </div>
-                    ))}
-                  </CommandGroup>
-                  <CommandGroup heading="Individual Metrics">
-                    {METRICS_LIST.map((metricKey) => (
-                      <CommandItem key={`metric-${metricKey}`} value={`${METRIC_DISPLAY_NAMES[metricKey] || metricKey} ${metricKey}`} onSelect={() => {
-                        const isSelected = selectedIndividualMetrics.includes(metricKey);
-                        setSelectedIndividualMetrics((prev) => (isSelected ? prev.filter((m) => m !== metricKey) : [...prev, metricKey]));
-                      }}>
-                        <Check className={cn('mr-2 h-4 w-4', selectedIndividualMetrics.includes(metricKey) ? 'opacity-100' : 'opacity-0')} />
-                        {METRIC_DISPLAY_NAMES[metricKey] || metricKey}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
-        </div>
-      </header>
-
-      <div className="flex flex-1 min-h-0 p-4 gap-4 items-stretch overflow-hidden">
-        <section ref={panelRef} className="flex-1 min-h-0 min-w-0 flex flex-col p-2 bg-black border border-white/20 rounded-md relative overflow-hidden">
+      <div className="flex flex-1 min-h-0 p-4 gap-4 items-start overflow-hidden">
+        <section ref={panelRef} className="flex-1 min-h-0 min-w-0 flex flex-col p-2 bg-black border border-white/20 rounded-md relative overflow-hidden" style={{ height: 'calc(90% - 2rem)' }}>
           {(() => {
             if (loading || !metricData) return <span className="text_WHITE/60">Loading chart...</span>;
             return (
@@ -686,7 +639,53 @@ export default function AIWorkbenchV2() {
           })()}
         </section>
 
-        <aside className="relative w-[420px] md:w-[360px] min-w-[320px] h-full flex flex-col bg-black border border-white/20 rounded-md overflow-hidden flex-none">
+        <div className="w-[420px] md:w-[360px] min-w-[320px] flex flex-col gap-4 flex-none" style={{ height: 'calc(90% - 2rem)' }}>
+          {/* Metric selection dropdown - same width as AI chat area */}
+          <div className="flex items-center justify-end flex-none">
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" role="combobox" aria-expanded={open} className="h-10 w-full justify-between bg-black border-white/20 text-white hover:bg_WHITE/10">
+                  {selectedMetricKeys.length > 0 ? `${selectedMetricKeys.length} metric${selectedMetricKeys.length > 1 ? 's' : ''} selected` : 'Select metrics...'}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[420px] md:w-[360px] p-0 bg-black border-white/20">
+                <Command>
+                  <CommandInput placeholder="Search groups and metrics..." className="h-9" />
+                  <CommandList className="max-h-[400px]">
+                    <CommandEmpty>No results found.</CommandEmpty>
+                    <CommandGroup heading="Groups">
+                      {METRIC_GROUPS.map((group) => (
+                        <div key={`group-${group.name}`}>
+                          <CommandItem value={group.name} onSelect={() => {
+                            const isSelected = selectedGroups.includes(group.name);
+                            setSelectedGroups((prev) => (isSelected ? prev.filter((g) => g !== group.name) : [...prev, group.name]));
+                          }}>
+                            <Check className={cn('mr-2 h-4 w-4', selectedGroups.includes(group.name) ? 'opacity-100' : 'opacity-0')} />
+                            {group.name}
+                          </CommandItem>
+                        </div>
+                      ))}
+                    </CommandGroup>
+                    <CommandGroup heading="Individual Metrics">
+                      {METRICS_LIST.map((metricKey) => (
+                        <CommandItem key={`metric-${metricKey}`} value={`${METRIC_DISPLAY_NAMES[metricKey] || metricKey} ${metricKey}`} onSelect={() => {
+                          const isSelected = selectedIndividualMetrics.includes(metricKey);
+                          setSelectedIndividualMetrics((prev) => (isSelected ? prev.filter((m) => m !== metricKey) : [...prev, metricKey]));
+                        }}>
+                          <Check className={cn('mr-2 h-4 w-4', selectedIndividualMetrics.includes(metricKey) ? 'opacity-100' : 'opacity-0')} />
+                          {METRIC_DISPLAY_NAMES[metricKey] || metricKey}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {/* AI chat area */}
+          <aside className="relative w-full flex-1 min-h-0 flex flex-col bg-black border border-white/20 rounded-md overflow-hidden">
           <div className="p-3 border-b border-white/20 bg-black">
             <div className="flex items_center gap-2 flex-nowrap overflow-hidden">
               <div className="flex items-center gap-2 shrink-0">
@@ -747,6 +746,7 @@ export default function AIWorkbenchV2() {
             </div>
           </div>
         </aside>
+        </div>
       </div>
     </div>
   );

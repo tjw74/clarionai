@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 // import Link from "next/link"; // Unused import
 import Sidebar from "../components/Sidebar";
+import TopBar from "../components/TopBar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,16 +33,19 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black text-white`}
       >
-        <div className="flex min-h-screen">
-          {/* Sidebar */}
-          <Sidebar />
-          {/* Main content */}
-          <div className="relative flex-1 min-h-0 overflow-hidden">
-            {/* Unified horizontal divider */}
-            <div className="pointer-events-none absolute left-0 right-0 top-16 h-px bg-white/20 z-30" />
-            <main className="flex flex-col flex-1 min-h-0 bg-black text-white border-l border-white/20 overflow-hidden">
-              {children}
-            </main>
+        <div className="flex flex-col min-h-screen">
+          {/* Full-width top bar */}
+          <TopBar />
+          
+          <div className="flex flex-1 min-h-0 overflow-hidden">
+            {/* Sidebar */}
+            <Sidebar />
+            {/* Main content */}
+            <div className="relative flex-1 min-h-0 overflow-hidden">
+              <main className="flex flex-col flex-1 min-h-0 bg-black text-white border-l border-white/20 overflow-hidden">
+                {children}
+              </main>
+            </div>
           </div>
         </div>
       </body>

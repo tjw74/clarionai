@@ -1,7 +1,6 @@
 'use client';
 import Link from "next/link";
 import { useState } from "react";
-import Image from "next/image";
 import { Bot, BarChart3, DollarSign, Activity, TrendingUp } from "lucide-react";
 
 export default function Sidebar() {
@@ -19,7 +18,7 @@ export default function Sidebar() {
   if (!open) {
     return (
       <button
-        className="fixed top-1/2 -translate-y-1/2 left-0 z-50 w-8 h-8 flex items-center justify-center bg-black border border-white/20 rounded-full text-white hover:bg-white/10 shadow-lg"
+        className="fixed top-[calc(50%+2rem)] -translate-y-1/2 left-0 z-50 w-8 h-8 flex items-center justify-center bg-black border border-white/20 rounded-full text-white hover:bg-white/10 shadow-lg"
         onClick={() => { setOpen(true); notifyResize(); }}
         aria-label="Open sidebar"
         type="button"
@@ -30,7 +29,7 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="relative w-56 h-screen bg-black border-r border-white/20 flex flex-col shadow-lg z-40 flex-none">
+    <aside className="relative w-56 h-full bg-black border-r border-white/20 flex flex-col shadow-lg z-40 flex-none">
       {/* Collapse button */}
       <button
         className="absolute -right-4 top-1/2 -translate-y-1/2 z-50 w-8 h-8 flex items-center justify-center bg-black border border-white/20 rounded-full text-white hover:bg-white/10"
@@ -40,23 +39,6 @@ export default function Sidebar() {
       >
         <span>{'<'}</span>
       </button>
-      {/* Logo and title row */}
-      <div className="flex items-center justify-between px-6 h-16">
-        <div className="flex flex-row items-center gap-3">
-          <Image
-            src="/clarion_chain_logo.png"
-            alt="ClarionChain Logo"
-            width={32}
-            height={32}
-            className="rounded"
-          />
-          <span className="text-lg font-bold tracking-wide">ClarionChain</span>
-        </div>
-        <div className="flex items-center gap-2">
-          {/* Empty space to match main header structure */}
-        </div>
-      </div>
-      {/* Unified horizontal divider is rendered globally in layout */}
       {/* Navigation */}
       <nav className="flex flex-col gap-2 mt-8 px-4">
 
