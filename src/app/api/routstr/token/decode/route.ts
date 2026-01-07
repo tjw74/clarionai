@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { decodeTokenV4 } from '@cashu/cashu-ts';
+import { getDecodedToken } from '@cashu/cashu-ts';
 
 export const runtime = 'nodejs';
 
@@ -18,24 +18,22 @@ export async function POST(req: NextRequest) {
 
     try {
       // Decode the token
-      const decoded = decodeTokenV4(token);
+      const decoded = getDecodedToken(token);
       
       // Calculate total amount from proofs
       let totalAmount = 0;
       const mintUrls = new Set<string>();
       
-      decoded.token.forEach((tokenEntry) => {
-        if (tokenEntry.mint) {
-          mintUrls.add(tokenEntry.mint);
-        }
-        if (tokenEntry.proofs) {
-          tokenEntry.proofs.forEach((proof) => {
-            if (proof.amount) {
-              totalAmount += proof.amount;
-            }
-          });
-        }
-      });
+      if (decoded.mint) {
+        mintUrls.add(decoded.mint);
+      }
+      if (decoded.proofs) {
+        decoded.proofs.forEach((proof) => {
+          if (proof.amount) {
+            totalAmount += proof.amount;
+          }
+        });
+      }
 
       return NextResponse.json({
         success: true,
@@ -43,18 +41,17 @@ export async function POST(req: NextRequest) {
           totalAmount,
           totalAmountSats: totalAmount,
           mints: Array.from(mintUrls),
-          numProofs: decoded.token.reduce((sum, entry) => sum + (entry.proofs?.length || 0), 0),
-          tokenEntries: decoded.token.length,
+          numProofs: decoded.proofs?.length || 0,
           isSpent: false, // We can't check if spent without querying the mint
         },
         decoded: {
-          token: decoded.token.map((entry) => ({
-            mint: entry.mint,
-            proofs: entry.proofs?.map((p) => ({
-              amount: p.amount,
-              secret: p.secret?.substring(0, 16) + '...', // Only show first part for security
-              C: p.C?.substring(0, 16) + '...',
-            })),
+          mint: decoded.mint,
+          memo: decoded.memo,
+          unit: decoded.unit,
+          proofs: decoded.proofs?.map((p) => ({
+            amount: p.amount,
+            secret: p.secret ? (typeof p.secret === 'string' ? p.secret.substring(0, 16) + '...' : '...') : undefined,
+            C: p.C ? (typeof p.C === 'string' ? p.C.substring(0, 16) + '...' : '...') : undefined,
           })),
         },
       });
