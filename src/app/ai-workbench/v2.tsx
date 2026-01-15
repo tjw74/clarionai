@@ -34,32 +34,43 @@ export default function AIWorkbenchV2() {
     const colors: Record<string, string> = {};
     const totalMetrics = selectedMetrics.length;
     
-    // Define non-red color range: skip red hues (0-20 and 340-360)
-    // Use hues from 30 to 320 (290 degrees total, avoiding red)
-    const availableHueRange = 290;
-    const hueStep = availableHueRange / totalMetrics;
+    // Define non-red color range: skip red hues (0-30 and 330-360)
+    // Use hues from 30 to 330 (300 degrees total, avoiding red)
     const startHue = 30; // Start after red range
+    const endHue = 330; // End before red range
+    const availableHueRange = endHue - startHue; // 300 degrees
+    const hueStep = availableHueRange / Math.max(totalMetrics, 1);
     
     selectedMetrics.forEach((metricKey, index) => {
-      // Calculate base hue avoiding red range
-      const baseHue = (startHue + index * hueStep) % 360;
+      // Calculate base hue within safe range (30-330), no modulo to avoid wrapping
+      let baseHue = startHue + (index * hueStep);
+      
+      // Wrap within safe range without using modulo (which could create red)
+      while (baseHue > endHue) {
+        baseHue = startHue + (baseHue - endHue);
+      }
       
       // Ensure good contrast by varying saturation and lightness
       const saturation = 70 + (index % 3) * 10; // 70%, 80%, 90%
       const lightness = 50 + (index % 3) * 10;  // 50%, 60%, 70%
       
-      // Add slight randomization for visual interest, but keep away from red
-      const hueVariation = Math.random() * 20 - 10;
-      let finalHue = (baseHue + hueVariation + 360) % 360;
+      // Add slight randomization for visual interest, but constrained to safe range
+      const hueVariation = (Math.random() * 20 - 10); // -10 to +10
+      let finalHue = baseHue + hueVariation;
       
-      // If the hue falls in the red range (0-20 or 340-360), shift it
-      if (finalHue >= 0 && finalHue <= 20) {
-        finalHue = 30; // Shift to orange-yellow
-      } else if (finalHue >= 340 && finalHue <= 360) {
-        finalHue = 320; // Shift to magenta
+      // Clamp finalHue to safe range (30-330), avoiding red completely
+      if (finalHue < startHue) {
+        finalHue = startHue + Math.random() * 10; // Shift to orange-yellow range (30-40)
+      } else if (finalHue > endHue) {
+        finalHue = endHue - 10 - Math.random() * 10; // Shift to magenta range (310-320)
       }
       
-      colors[metricKey] = `hsl(${finalHue}, ${saturation}%, ${lightness}%)`;
+      // Final safety check - ensure no red hues (double-check)
+      if (finalHue < startHue || finalHue > endHue) {
+        finalHue = startHue + 20 + (Math.random() * 20); // Force to safe orange-yellow range (50-70)
+      }
+      
+      colors[metricKey] = `hsl(${Math.round(finalHue)}, ${saturation}%, ${lightness}%)`;
     });
     
     return colors;
