@@ -34,18 +34,30 @@ export default function AIWorkbenchV2() {
     const colors: Record<string, string> = {};
     const totalMetrics = selectedMetrics.length;
     
+    // Define non-red color range: skip red hues (0-20 and 340-360)
+    // Use hues from 30 to 320 (290 degrees total, avoiding red)
+    const availableHueRange = 290;
+    const hueStep = availableHueRange / totalMetrics;
+    const startHue = 30; // Start after red range
+    
     selectedMetrics.forEach((metricKey, index) => {
-      // Calculate optimal spacing between colors
-      const hueStep = 360 / totalMetrics;
-      const baseHue = (index * hueStep) % 360;
+      // Calculate base hue avoiding red range
+      const baseHue = (startHue + index * hueStep) % 360;
       
       // Ensure good contrast by varying saturation and lightness
       const saturation = 70 + (index % 3) * 10; // 70%, 80%, 90%
       const lightness = 50 + (index % 3) * 10;  // 50%, 60%, 70%
       
-      // Add slight randomization for visual interest
+      // Add slight randomization for visual interest, but keep away from red
       const hueVariation = Math.random() * 20 - 10;
-      const finalHue = (baseHue + hueVariation + 360) % 360;
+      let finalHue = (baseHue + hueVariation + 360) % 360;
+      
+      // If the hue falls in the red range (0-20 or 340-360), shift it
+      if (finalHue >= 0 && finalHue <= 20) {
+        finalHue = 30; // Shift to orange-yellow
+      } else if (finalHue >= 340 && finalHue <= 360) {
+        finalHue = 320; // Shift to magenta
+      }
       
       colors[metricKey] = `hsl(${finalHue}, ${saturation}%, ${lightness}%)`;
     });
