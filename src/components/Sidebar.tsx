@@ -29,7 +29,7 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="relative w-56 h-full bg-black border-r border-white/20 flex flex-col shadow-lg z-40 flex-none">
+    <aside className="relative w-56 bg-black border-r border-white/20 flex flex-col shadow-lg z-40 flex-none self-stretch" style={{ backgroundColor: '#000000' }}>
       {/* Collapse button */}
       <button
         className="absolute -right-4 top-1/2 -translate-y-1/2 z-50 w-8 h-8 flex items-center justify-center bg-black border border-white/20 rounded-full text-white hover:bg-white/10"
