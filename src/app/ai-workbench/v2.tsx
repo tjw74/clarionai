@@ -199,28 +199,64 @@ export default function AIWorkbenchV2() {
     
     metrics.forEach((metric) => {
       const data = metricData.metrics[metric];
-      if (!data || data.length === 0) return;
+      if (!data || data.length === 0) {
+        console.warn(`Metric ${metric} has no data or empty array`);
+        // Still assign to an axis so it can be displayed (even if empty)
+        metricRanges.push({ 
+          metric, 
+          range: { min: 0, max: 1 }, 
+          scale: 'linear' 
+        });
+        return;
+      }
       
       const slicedData = data.slice(start, end + 1).filter(v => typeof v === 'number' && !isNaN(v));
-      if (slicedData.length === 0) return;
+      if (slicedData.length === 0) {
+        console.warn(`Metric ${metric} has no valid numeric data in selected range`);
+        // Still assign to an axis with default range
+        metricRanges.push({ 
+          metric, 
+          range: { min: 0, max: 1 }, 
+          scale: 'linear' 
+        });
+        return;
+      }
       
       const min = Math.min(...slicedData);
       const max = Math.max(...slicedData);
       
-      // Skip metrics with invalid ranges (but allow negative values for loss metrics)
-      if (min === max) {
-        if (process.env.NODE_ENV === 'development') {
-          console.warn(`Skipping metric ${metric} due to invalid range: min=${min}, max=${max}`);
-        }
+      // Handle metrics with invalid ranges - use fallback range instead of skipping
+      if (min === max || !isFinite(min) || !isFinite(max)) {
+        console.warn(`Metric ${metric} has invalid range: min=${min}, max=${max}, using fallback range`);
+        // Use a small default range so the metric can still be displayed
+        metricRanges.push({ 
+          metric, 
+          range: { min: min === max ? (min || 0) : 0, max: min === max ? (max || 1) : 1 }, 
+          scale: 'linear' 
+        });
         return;
       }
       
       // For loss metrics, allow negative values; for others, require positive values
       const isLossMetric = METRIC_SCALE_TYPES.USD_LOSS.includes(metric as any);
       if (!isLossMetric && (min <= 0 || max <= 0)) {
-        if (process.env.NODE_ENV === 'development') {
-          console.warn(`Skipping metric ${metric} due to non-positive range: min=${min}, max=${max}`);
+        // If all values are non-positive, use a small positive range as fallback
+        if (max <= 0) {
+          console.warn(`Metric ${metric} has non-positive range: min=${min}, max=${max}, using fallback range`);
+          metricRanges.push({ 
+            metric, 
+            range: { min: 0.01, max: 1 }, 
+            scale: 'linear' 
+          });
+          return;
         }
+        // If only min is <= 0, clamp it to a small positive value
+        const adjustedMin = Math.max(min, 0.01);
+        metricRanges.push({ 
+          metric, 
+          range: { min: adjustedMin, max }, 
+          scale: 'linear' 
+        });
         return;
       }
       
@@ -402,15 +438,36 @@ export default function AIWorkbenchV2() {
     const sliced: Record<string, number[]> = {};
 
     selectedMetricKeys.forEach((key) => {
-      const arr = metricData.metrics[key] || [];
-      sliced[key] = arr.slice(start, end + 1);
+      const arr = metricData.metrics[key];
+      if (!arr || !Array.isArray(arr)) {
+        console.warn(`Metric ${key} not found in metricData.metrics`);
+        // Create empty array matching date length
+        sliced[key] = new Array(end - start + 1).fill(NaN);
+        return;
+      }
+      
+      // Ensure array has correct length
+      if (arr.length < end + 1) {
+        console.warn(`Metric ${key} has insufficient data: length=${arr.length}, expected at least ${end + 1}`);
+        // Pad with NaN if needed
+        const padded = [...arr, ...new Array(end + 1 - arr.length).fill(NaN)];
+        sliced[key] = padded.slice(start, end + 1);
+      } else {
+        sliced[key] = arr.slice(start, end + 1);
+      }
+      
       let config = METRIC_GROUPS.flatMap((g) => g.metrics).find((m) => m?.key === key);
       if (!config) {
         const name = METRIC_DISPLAY_NAMES[key];
         if (name) config = { key, name, color: '#33B1FF', yaxis: 'y', zScore: false } as any;
       }
-      if (config?.zScore) {
-        zScores[key] = calculateZScores(arr, 1460).slice(start, end + 1);
+      if (config?.zScore && arr.length > 0) {
+        try {
+          zScores[key] = calculateZScores(arr, 1460).slice(start, end + 1);
+        } catch (error) {
+          console.warn(`Failed to calculate Z-score for ${key}:`, error);
+          zScores[key] = new Array(end - start + 1).fill(NaN);
+        }
       }
     });
 
@@ -433,6 +490,12 @@ export default function AIWorkbenchV2() {
     const { x, zScores, slicedMetrics } = processedData;
     const traces: any[] = [];
     
+    // Validate selected metrics exist in data
+    const missingMetrics = selectedMetricKeys.filter(key => !slicedMetrics[key] || slicedMetrics[key].length === 0);
+    if (missingMetrics.length > 0 && process.env.NODE_ENV === 'development') {
+      console.warn(`Selected metrics missing from processed data:`, missingMetrics);
+    }
+    
     // Generate unique colors for current metric selection
     const metricColors = generateAdaptiveColors(selectedMetricKeys);
     
@@ -442,23 +505,51 @@ export default function AIWorkbenchV2() {
     }
     
     selectedMetricKeys.forEach((key) => {
+      // Check if metric data exists
+      if (!slicedMetrics[key] || !Array.isArray(slicedMetrics[key])) {
+        console.warn(`Skipping metric ${key}: no data available`);
+        return;
+      }
+      
       let config = METRIC_GROUPS.flatMap((g) => g.metrics).find((m) => m?.key === key);
       if (!config) {
         const name = METRIC_DISPLAY_NAMES[key];
-        if (name) config = { key, name, yaxis: 'y', zScore: false } as any;
+        if (name) {
+          config = { key, name, yaxis: 'y', zScore: false } as any;
+        } else {
+          // Use the key as the name if no display name found
+          config = { key, name: key, yaxis: 'y', zScore: false } as any;
+        }
       }
-      if (!config) return;
+      if (!config) {
+        console.warn(`Skipping metric ${key}: no configuration found`);
+        return;
+      }
       
       // Use dynamically generated color
-      const color = metricColors[key];
+      const color = metricColors[key] || '#33B1FF'; // Fallback color if generation failed
       
-      // Find which axis group this metric belongs to
+      // Find which axis group this metric belongs to, with fallback
       const axisGroup = axisGroups.find(group => group.metrics.includes(key));
-      const yaxis = axisGroup ? axisGroup.axisId : (rightAxisMetrics.includes(key) ? 'y2' : 'y');
+      let yaxis = axisGroup ? axisGroup.axisId : (rightAxisMetrics.includes(key) ? 'y2' : 'y');
+      
+      // If metric wasn't assigned to any axis, assign to default axis
+      if (!axisGroup && !leftAxisMetrics.includes(key) && !rightAxisMetrics.includes(key)) {
+        yaxis = 'y'; // Default to left axis
+        console.warn(`Metric ${key} not assigned to any axis group, using default axis`);
+      }
+      
+      // Filter out NaN values for better rendering, but keep the array structure
+      const metricData = slicedMetrics[key];
+      const hasValidData = metricData.some(v => typeof v === 'number' && !isNaN(v) && isFinite(v));
+      
+      if (!hasValidData) {
+        console.warn(`Metric ${key} (${config.name}) has no valid data points`);
+      }
       
       traces.push({ 
         x, 
-        y: slicedMetrics[key], 
+        y: metricData, 
         name: config.name, 
         type: 'scatter', 
         mode: 'lines', 
@@ -484,7 +575,7 @@ export default function AIWorkbenchV2() {
       }
     });
     return traces;
-  }, [processedData, selectedMetricKeys, hiddenTraces, rightAxisMetrics, axisGroups, generateAdaptiveColors, modifyColorForZScore]);
+  }, [processedData, selectedMetricKeys, hiddenTraces, rightAxisMetrics, axisGroups, leftAxisMetrics, generateAdaptiveColors, modifyColorForZScore]);
 
   const chartLayout = useMemo(() => {
     const base: any = {

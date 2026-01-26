@@ -47,7 +47,7 @@ export async function fetchAllMetrics(apiBaseUrl: string = DEFAULT_API_BASE): Pr
 
       const response = await fetch(url);
       if (!response.ok) {
-        console.warn(`Failed to fetch batch ${Math.floor(i/batchSize) + 1}: ${response.status}`);
+        console.warn(`Failed to fetch batch ${Math.floor(i/batchSize) + 1} (${batch.join(', ')}): ${response.status} ${response.statusText}`);
         // Fill with NaN for failed batch
         batch.forEach(metric => {
           metrics[metric] = new Array(dates.length).fill(NaN);
@@ -57,7 +57,7 @@ export async function fetchAllMetrics(apiBaseUrl: string = DEFAULT_API_BASE): Pr
 
       const data = await response.json();
       if (!Array.isArray(data) || data.length < 2) {
-        console.warn(`Invalid data format for batch ${Math.floor(i/batchSize) + 1}`);
+        console.warn(`Invalid data format for batch ${Math.floor(i/batchSize) + 1} (${batch.join(', ')}): expected array with at least 2 elements, got ${typeof data}`);
         batch.forEach(metric => {
           metrics[metric] = new Array(dates.length).fill(NaN);
         });
@@ -68,9 +68,20 @@ export async function fetchAllMetrics(apiBaseUrl: string = DEFAULT_API_BASE): Pr
       batch.forEach((metric, batchIndex) => {
         const metricData = data[batchIndex + 1]; // +1 because dates is at index 0
         if (Array.isArray(metricData)) {
-          metrics[metric] = metricData;
+          // Validate array length matches dates
+          if (metricData.length === dates.length) {
+            metrics[metric] = metricData;
+          } else {
+            console.warn(`Metric ${metric} has incorrect length: ${metricData.length}, expected ${dates.length}`);
+            // Pad or truncate to match dates length
+            if (metricData.length < dates.length) {
+              metrics[metric] = [...metricData, ...new Array(dates.length - metricData.length).fill(NaN)];
+            } else {
+              metrics[metric] = metricData.slice(0, dates.length);
+            }
+          }
         } else {
-          console.warn(`No data found for metric: ${metric}`);
+          console.warn(`No data found for metric: ${metric} (got ${typeof metricData})`);
           metrics[metric] = new Array(dates.length).fill(NaN);
         }
       });
@@ -82,7 +93,26 @@ export async function fetchAllMetrics(apiBaseUrl: string = DEFAULT_API_BASE): Pr
     // Merge derived metrics with base metrics
     Object.assign(metrics, derivedMetrics);
     
-    console.log(`Successfully fetched ${Object.keys(metrics).length} metrics (including ${Object.keys(derivedMetrics).length} derived) with ${dates.length} data points`);
+    // Check for metrics that are all NaN (failed to fetch)
+    const failedMetrics: string[] = [];
+    const successfulMetrics: string[] = [];
+    
+    Object.keys(metrics).forEach(key => {
+      const arr = metrics[key];
+      if (Array.isArray(arr)) {
+        const validCount = arr.filter(v => typeof v === 'number' && !isNaN(v) && isFinite(v)).length;
+        if (validCount === 0) {
+          failedMetrics.push(key);
+        } else {
+          successfulMetrics.push(key);
+        }
+      }
+    });
+    
+    console.log(`Successfully fetched ${successfulMetrics.length} metrics with valid data (including ${Object.keys(derivedMetrics).length} derived) with ${dates.length} data points`);
+    if (failedMetrics.length > 0) {
+      console.warn(`Failed to fetch ${failedMetrics.length} metrics (all NaN):`, failedMetrics);
+    }
     console.log('Available metrics:', Object.keys(metrics));
     console.log('Derived metrics:', Object.keys(derivedMetrics));
     if (derivedMetrics['mvrv-ratio']) {
